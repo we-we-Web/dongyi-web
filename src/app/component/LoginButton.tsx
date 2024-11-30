@@ -50,10 +50,10 @@ function LoginButton() {
             <button
                 onClick={handleLoginClick}
                 className="flex items-center rounded-full hover:opacity-70"
-                style={{ border: '2px solid black' }}
+                style={{ border: '2px solid #9F79EE' }}
             >
                 { profile ? <img src={profile.picture} alt="Profile Picture" className="w-9 rounded-full" /> :
-                    <FontAwesomeIcon icon={faUserRegular} className="text-2xl m-1.5" />
+                    <FontAwesomeIcon icon={faUserRegular} className="text-2xl m-1.5" style={{ color: '#9F79EE' }} />
                 }
             </button>
 

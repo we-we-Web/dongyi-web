@@ -10,6 +10,7 @@ import '../globals.css';
 export default function ProductContent() {
     const [product, setProduct] = useState<Product | null>(null);
     const router = useRouter();
+    const [amount, setQuantity] = useState<number>(1);
 
     useEffect(() => {
         const getProduct = async(id: string) => {
@@ -44,15 +45,36 @@ export default function ProductContent() {
         }
     }, [product]);
     
-    const addtoCart = async(id: string) => {
+    const addtoCart = async (id: string) => {
         const url = `https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd`;
-        const request = {
-            id: id,
-            product: `${product?.id}`,
-            quantity: 1,
-        }
-        console.log('request body:', request);
+    
         try {
+            // Step 1: 從 localStorage 獲取原本的數量
+            const localCart = localStorage.getItem("cart");
+            let cartData = localCart ? JSON.parse(localCart) : {}; // 確保為合法 JSON
+            let currentQuantity = cartData[id]?.quantity || 0; // 如果不存在，默認為 0
+    
+            // Step 2: 計算最終的數量
+            const finalQuantity = currentQuantity + amount;
+    
+            // Step 3: 更新 localStorage
+            cartData = {
+                ...cartData,
+                [id]: { product: product?.id, quantity: finalQuantity },
+            };
+            localStorage.setItem("cart", JSON.stringify(cartData));
+    
+            console.log('Updated cart:', cartData);
+    
+            // Step 4: 發送更新請求到後端
+            const request = {
+                id: id,
+                product: `${product?.id}`,
+                quantity: finalQuantity,
+            };
+    
+            console.log('request body:', request);
+    
             const response = await fetch(url, {
                 method: 'PATCH',
                 headers: {
@@ -60,19 +82,20 @@ export default function ProductContent() {
                 },
                 body: JSON.stringify(request),
             });
+    
             if (response.ok) {
                 const result = await response.json();
                 console.log(result);
-                alert('upd cart item successfully');
+                alert('Updated cart item successfully');
             } else if (response.status === 404) {
-                console.log('cart not found');
+                console.log('Cart not found');
             } else {
-                console.log('failed to upd cart:', response.status);
+                console.log('Failed to update cart:', response.status);
             }
         } catch (err) {
-            console.error('error:', err);
+            console.error('Error:', err);
         }
-    };
+    };    
 
     if (!product) return <p>Loading...</p>;
     return (
@@ -90,8 +113,27 @@ export default function ProductContent() {
                     <h1 className="text-[4em] font-bold">{product.name}</h1>
                     <div className="text-[3em] text-red-700 font-bold">{product.price} <span className="text-[0.5em]">元</span> </div>
                     <div>{product.description}</div>
+                    <div className="flex items-center mt-[2em]">
+                        <button 
+                            className="bg-gray-300 w-[2em] h-[2em] text-black hover:opacity-60" 
+                            onClick={() => setQuantity(amount > 1 ? amount - 1 : 1)}>
+                                -
+                        </button>
+                        <input 
+                            type="number" 
+                            className="w-[4em] text-center mx-[1em] border border-gray-400" 
+                            value={amount} 
+                            onChange={(e) => setQuantity(Number(e.target.value))}
+                            min="1"
+                        />
+                        <button 
+                            className="bg-gray-300 w-[2em] h-[2em] text-black hover:opacity-60" 
+                            onClick={() => setQuantity(amount + 1)}>
+                                +
+                        </button>
+                    </div>
                     <button 
-                        className="bg-red-700 w-[10em] h-[2em] text-white mt-[5em] ml-[3em] hover:opacity-60" 
+                        className="bg-[#9F79EE] w-[10em] h-[2em] text-white mt-[1em]  hover:opacity-60" 
                         onClick={() => addtoCart(`demo@gmail.com`)}>
                             add to cart
                     </button>
