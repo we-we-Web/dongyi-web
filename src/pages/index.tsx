@@ -1,49 +1,45 @@
-'use client'
+'use server'
 
-import React, { useEffect, useState } from 'react';
+import { GetServerSideProps } from 'next';
 import ProductCard from '../app/component/ProductCard';
 import Product from '../app/model/product';
 import NavigationBar from '../app/component/NavigationBar';
 import '../globals.css';
+import { useEffect, useState } from 'react';
 
-function Home() {
-    const [data, setData] = useState<Product[]>([]);
-    const [isLoading, setLoading] = useState(true);
-    const [categories, setCategories] = useState<string[]>([]); // 保存所有類別
-    const [selectedCategory, setSelectedCategory] = useState<string>(''); // 當前選中的類別
-    const [filteredData, setFilteredData] = useState<Product[]>([]); // 篩選後的商品列表
+export const getServerSideProps: GetServerSideProps = async () => {
+    try {
+        const url = 'https://dongyi-api.hnd1.zeabur.app/product/products';
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data: Product[] = await response.json();
+        return { props: { data } };
+    } catch (err) {
+        console.error("Error fetching data:", err);
+        return { props: { data: [] } };
+    }
+};
 
-    // 獲取商品資料
+function Home({ data }: { data: Product[] }) {
+    const [categories, setCategories] = useState<string[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [filteredData, setFilteredData] = useState<Product[]>([]);
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const url = 'https://dongyi-api.hnd1.zeabur.app/product/products';
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                const result: Product[] = await response.json();
-                setData(result);
-                setFilteredData(result); // 預設顯示所有商品
-
-                // 提取唯一的 categories，並過濾掉 undefined
-                const uniqueCategories: string[] = Array.from(
-                    new Set(result.map((product) => product.categories).filter((category): category is string => category !== undefined))
-                );
-                setCategories(uniqueCategories);
-            } catch (err) {
-                console.error("Error fetching data:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
+        setFilteredData(data);
+        const uniqueCategories: string[] = Array.from(
+            new Set(data.map((product) => 
+                product.categories).filter((category): category is string => category !== undefined)
+            )
+        );
+        setCategories(uniqueCategories);
     }, []);
 
-    // 類別篩選處理
     const handleCategorySearch = () => {
         if (selectedCategory === '') {
-            setFilteredData(data); // 如果未選擇類別，顯示所有商品
+            setFilteredData(data);
         } else {
             const filtered = data.filter(
                 (product) => product.categories === selectedCategory
@@ -52,25 +48,12 @@ function Home() {
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center">
-                <h1>Loading...</h1>
-            </div>
-        );
-    }
-
-    if (!filteredData.length) {
-        return <div className="p-6">沒有符合條件的商品。</div>;
-    }
-
     return (
         <>
             <NavigationBar />
             <div className="p-6 relative mt-16">
                 <h1 className="text-2xl font-bold mb-6">商品列表</h1>
 
-                {/* 下拉式選單選擇類別 */}
                 <div className="mb-4 flex items-center">
                     <label htmlFor="categorySelect" className="mr-2 font-semibold">選擇類別:</label>
                     <select
@@ -102,6 +85,7 @@ function Home() {
             </div>
         </>
     );
-}
+};
+
 
 export default Home;

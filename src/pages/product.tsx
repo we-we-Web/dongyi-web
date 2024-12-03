@@ -1,4 +1,4 @@
-'use client'
+'use server'
 
 import React, { useEffect, useState } from 'react';
 import Product from '../app/model/product';
@@ -6,37 +6,46 @@ import { useRouter } from 'next/navigation';
 import NavigationBar from '../app/component/NavigationBar';
 import Image from 'next/image';
 import '../globals.css';
+import { GetServerSideProps } from 'next';
 
-export default function ProductContent() {
-    const [product, setProduct] = useState<Product | null>(null);
-    const [productNum, setProductNum] = useState(1);
+export const getServerSideProps: GetServerSideProps = async() => {
+    const getProduct = async(id: string) => {
+        const url = `https://dongyi-api.hnd1.zeabur.app/product/products/${id}`;
+        try {
+            const response = await fetch(url);
+            if (response.ok) {
+                const product = await response.json();
+                // setProduct(result);
+                console.log(`Get product ${id} successfully`);
+                return { props: { product } };
+            } else {
+                console.error('failed to fetch:', response.status);
+            }
+        } catch(err) {
+            console.error('error:', err);
+            return { props: {} };
+        }
+    }
+
+    const productID = localStorage.getItem("product");
     const router = useRouter();
+    if (!productID) {
+        console.error("failed to get product id from local storage.");
+        // TODO
+        router.push('/');
+        return { props: { data: [] } };
+    }
+    getProduct(productID);
+    return { props: {} };
+}
+
+export default function ProductContent({ product }: { product: Product }) {
+    // const [product, setProduct] = useState<Product | null>(null);
+    const [productNum, setProductNum] = useState(1);
+    
 
     useEffect(() => {
-        const getProduct = async(id: string) => {
-            const url = `https://dongyi-api.hnd1.zeabur.app/product/products/${id}`;
-            try {
-                const response = await fetch(url);
-                if (response.ok) {
-                    const result = await response.json();
-                    setProduct(result);
-                    console.log(`Get product ${id} successfully`);
-                } else {
-                    console.error('failed to fetch:', response.status);
-                }
-            } catch(err) {
-                console.error('error:', err);
-            }
-        }
 
-        const productID = localStorage.getItem("product");
-        if (!productID) {
-            console.error("failed to get product id from local storage.");
-            // TODO
-            router.push('/');
-            return ;
-        }
-        getProduct(productID);
     }, []);
 
     useEffect(() => {
