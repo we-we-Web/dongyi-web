@@ -206,6 +206,20 @@ export default function CartPage() {
 
             <div className="cart">
                 <h2 className="text-xl font-semibold mb-2 p-6 relative mt-16">購物車</h2>
+                    {cart.length > 1 && (
+                        <div className="flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={cart.every(item => item.isSelected)}
+                                onChange={() => {
+                                    const allSelected = cart.every(item => item.isSelected);
+                                    setCart(cart.map(item => ({ ...item, isSelected: !allSelected })));
+                                }}
+                                className="mr-2"
+                            />
+                            <span>{cart.every(item => item.isSelected) ? '取消全選' : '全選'}</span>
+                        </div>
+                    )}
                 {cart.length === 0 ? (
                     <p>購物車是空的。</p>
                 ) : (

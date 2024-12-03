@@ -6,7 +6,7 @@ function CartButton() {
             <Link href="cart">
                 <button
                     className="flex items-center p-1.5 rounded-full hover:opacity-70"
-                    style={{ border: '2px solid black' }}
+                    style={{ border: '2px solid #9F79EE', color: '#9F79EE' }}
                 >
                     購物車
                 </button>

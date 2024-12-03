@@ -111,7 +111,7 @@ export default function ProductContent() {
                             </button>
                         </div>
                         <button 
-                            className="bg-red-700 w-full h-[2em] text-white mt-0 hover:opacity-60" 
+                            className="bg-[#9F79EE] w-full h-[2em] text-white mt-0 hover:opacity-60" 
                             onClick={() => addtoCart(`demo@gmail.com`)}>
                             Add to Cart
                         </button>
