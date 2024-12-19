@@ -1,7 +1,7 @@
 'use server'
 
 import React, { useEffect, useState } from 'react';
-import Product from '../app/model/product';
+import { Product, ProductSpec } from '../app/model/product';
 import NavigationBar from '../app/component/NavigationBar';
 import Image from 'next/image';
 import '../globals.css';
@@ -31,10 +31,10 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
 
 export default function ProductContent({ product }: { product: Product }) {
     const [email, setEmail] = useState('');
-    const [sizeQuantity, setSizeQuantity] = useState({ size: "", quantity: 0 });
     const [isLoginOpen, setLoginOpen] = useState(false);
     const [addingBtnText, setAddingBtnText] = useState('Add to Cart');
-    const [selectedSize, setSelectedSize] = useState(null);
+    const [selectedSpec, setSelectedSpec] = useState<ProductSpec | null>(null);
+    const [quantity, setQuantity] = useState(1);
 
     useEffect(() => {
         document.body.style.overflow = isLoginOpen ? 'hidden' : 'auto';
@@ -50,6 +50,9 @@ export default function ProductContent({ product }: { product: Product }) {
                 console.error("無效的 JWT:", error);
                 localStorage.removeItem('access-token');
             }
+        }
+        if (product && product.size.length > 0) {
+            setSelectedSpec(product.size[0]);
         }
     }, []);
 
@@ -67,9 +70,9 @@ export default function ProductContent({ product }: { product: Product }) {
         const request = {
             id: id,
             product: `${product?.id}`,
-            size: sizeQuantity.size,
-            delta: sizeQuantity.quantity,
-            remaining: product?.remain_amount,
+            size: selectedSpec?.size,
+            delta: quantity,
+            remaining: selectedSpec?.remaining,
         }
         console.log('request body:', request);
         try {
@@ -105,37 +108,18 @@ export default function ProductContent({ product }: { product: Product }) {
     
     
     const add = () => {
-        if(sizeQuantity.quantity < selectedSize?.quantity){
-            setSizeQuantity((prev)=>({
-                ...prev,
-                quantity: Math.min(prev.quantity + 1, selectedSize?.quantity || prev.quantity),
-            }));
-        }
-        else if(sizeQuantity.quantity === selectedSize?.quantity){
-            setSizeQuantity((prev)=>({
-                ...prev,
-                quantity: selectedSize?.quantity,
-            }));
-            setShowPopup(true);
-        }   
+        // if (quantity >= product.size.remaining) return ;
+        setQuantity(quantity+1);
     }
     const minus = () => {
-        if(sizeQuantity.quantity <= 2) setSizeQuantity((prev) => ({
-            ...prev,
-            quantity: 1,
-        }));
-        else {
-            setSizeQuantity((prev) => ({
-                ...prev,
-                quantity: Math.max(prev.quantity - 1, 1),
-            }));
-        }
+        if (quantity <= 1) return ;
+        setQuantity(quantity-1);
     }
 
-    const handleSizeClick = (key, value) => {
-        setSelectedSize({ size: key, quantity: value });
-        setSizeQuantity({ size: key, quantity: 1 });
-      };
+    const handleSizeClick = (size: string, remaining: number) => {
+        setSelectedSpec({ size: size, remaining: remaining });
+        setQuantity(1);
+    };
 
     if (!product) return <p>Loading...</p>;
     return (
@@ -160,17 +144,23 @@ export default function ProductContent({ product }: { product: Product }) {
                     <div className="flex flex-col mt-16">
                         <div className="flex flex-col">
                             <div className="flex gap-1">
-                                {Object.entries(product.size).map(([key, value]) =>(
-                                    <button key={key} onClick={()=>handleSizeClick(key, value)} className="flex items-center justify-center w-8 h-8 
-                                    bg-gray-100 hover:bg-gray-400 text-[1em] rounded-xl">
+                                {
+                                    Object.entries(product.size).map(([key, value]) => (
+                                    <button 
+                                        key={key} 
+                                        onClick={()=>handleSizeClick(value.size, value.remaining)} 
+                                        className={`flex items-center justify-center w-8 h-8 
+                                                bg-gray-100 hover:bg-gray-400 text-[1em] rounded-xl
+                                                ${selectedSpec?.size === key && `border-2 border-slate-400`}`}
+                                    >
                                         {key}
                                     </button>
                                 ))}
                             </div>
                             
-                            {selectedSize && (
+                            {selectedSpec && (
                                 <div className="mt-2 mb-2 ml-2">
-                                    {selectedSize.size}剩餘數量:{selectedSize.quantity}
+                                    {selectedSpec.size}剩餘數量:{selectedSpec.remaining}
                                 </div>
                             )}
                         </div>
@@ -178,14 +168,14 @@ export default function ProductContent({ product }: { product: Product }) {
                             <button onClick={minus} className="flex items-center justify-center w-8 h-8 
                                                             bg-gray-200  text-[2em]
                                                             ${sizeQuantity.quantity === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-400'}"
-                            disabled={sizeQuantity.quantity === 1}>
+                            disabled={quantity === 1}>
                                 -
                             </button>
-                            <span className="w-20 text-center">{sizeQuantity.quantity}</span>
+                            <span className="w-20 text-center">{quantity}</span>
                             <button onClick={add} className="flex items-center justify-center 
                                                             w-8 h-8 bg-gray-200 text-[2em]
                                                             ${sizeQuantity.quantity === selectedSize?.quantity ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-400'}"
-                            disabled={sizeQuantity.quantity === selectedSize?.quantity}>
+                            disabled={quantity === selectedSpec?.remaining}>
                                 +
                             </button>
                         </div>
