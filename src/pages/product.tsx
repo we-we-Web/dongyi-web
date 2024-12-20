@@ -3,12 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { Product, ProductSpec } from '../app/model/product';
 import NavigationBar from '../app/component/NavigationBar';
-import Image from 'next/image';
 import '../globals.css';
 import { GetServerSideProps } from 'next';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
 import LoginPopup from '../app/component/LoginPopup';
+import Loading from '../app/component/Loading';
+import ProductImage from '../app/component/ProductImage';
 
 export const getServerSideProps: GetServerSideProps = async(context) => {
     const ProductId = context.query!;
@@ -35,7 +36,6 @@ export default function ProductContent({ product }: { product: Product }) {
     const [addingBtnText, setAddingBtnText] = useState('Add to Cart');
     const [selectedSpec, setSelectedSpec] = useState<ProductSpec | null>(null);
     const [quantity, setQuantity] = useState(1);
-
     useEffect(() => {
         document.body.style.overflow = isLoginOpen ? 'hidden' : 'auto';
     }, [isLoginOpen]);
@@ -115,60 +115,48 @@ export default function ProductContent({ product }: { product: Product }) {
         if (quantity <= 1) return ;
         setQuantity(quantity-1);
     }
+    const sizeEntries = product.size ? Object.entries(product.size).filter(([key, value]) => Number(value) > 0) : [];
+    const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
     const handleSizeClick = (size: string, remaining: number) => {
         setSelectedSpec({ size: size, remaining: remaining });
         setQuantity(1);
     };
-
-    if (!product) return <p>Loading...</p>;
+    if (!product) return <Loading/>;
     return (
         <div className="flex h-[100%] w-[100%] pt-[10vh]">
             <NavigationBar />
             <div className='flex m-8'>
-                <Image 
-                    src={product.image ?? "/default.png"}
-                    className='mr-[5vw] border-gray-400 border object-contain'
-                    alt={product.name}
-                    width={800}
-                    height={800}
-                    priority={true}
-                />
-                <div className="flex-col pr-[10vw]">
-                    <h1 className="text-[4em] font-bold">{product.name}</h1>
-                    <div className="text-[3em] text-red-700 font-bold">
-                        {product.price} 
-                        <span className="text-[0.5em]">元</span> 
-                    </div>
-                    <div>{product.description}</div>
+                <ProductImage id={product.id} name={product.name} isIndex={false} />
+                <div className="flex-col ml-10 space-y-6">
+                    <h1 className="text-2xl font-bold">{product.name}</h1>
+                    <p className="text-gray-600 text-sm">{product.description}</p>
+                    <div className="text-2xl font-bold text-red-600">NT${product.price}</div>
                     <div className="flex flex-col mt-16">
-                        <div className="flex flex-col">
-                            <div className="flex gap-1">
-                                {
-                                    Object.entries(product.size).map(([key, value]) => (
-                                    <button 
-                                        key={key} 
-                                        onClick={()=>handleSizeClick(value.size, value.remaining)} 
-                                        className={`flex items-center justify-center w-8 h-8 
-                                                bg-gray-100 hover:bg-gray-400 text-[1em] rounded-xl
-                                                ${selectedSpec?.size === key && `border-2 border-slate-400`}`}
-                                    >
-                                        {key}
-                                    </button>
-                                ))}
+                    <div>
+                            <h4>
+                                尺寸：{selectedSize ? <span>{selectedSize}</span> : '未選擇'}
+                            </h4>
+                            <div className="flex">
+                                {sizeEntries.length > 0 ? (
+                                    sizeEntries.map(([size, quantity]) => (
+                                        <button 
+                                            key={size} 
+                                            className={`w-10 h-10 border-2 rounded-lg flex items-center justify-center m-1 cursor-pointer
+                                                        ${selectedSize === size ? 'border-[#9F79EE] text-[#9F79EE]':'border-gray-400 text-gray-400 hover:border-[#9F79EE] hover:text-[#9F79EE]'}`}
+                                            onClick={() => setSelectedSize(size)}
+                                        >
+                                            {size}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <span className="text-gray-500">目前無尺寸可選擇</span>
+                                )}
                             </div>
-                            
-                            {selectedSpec && (
-                                <div className="mt-2 mb-2 ml-2">
-                                    {selectedSpec.size}剩餘數量:{selectedSpec.remaining}
-                                </div>
-                            )}
-                        </div>
+                    </div>
                         <div className="flex items-center justify-center w-36 m-0">
                             <button onClick={minus} className="flex items-center justify-center w-8 h-8 
-                                                            bg-gray-200  text-[2em]
-                                                            ${sizeQuantity.quantity === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-400'}"
-                            disabled={quantity === 1}>
+                                                             hover:text-[#9F79EE] text-[2em]">
                                 -
                             </button>
                             <span className="w-20 text-center">{quantity}</span>

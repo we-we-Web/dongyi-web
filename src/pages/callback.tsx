@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import Loading from '../app/component/Loading';
 
 export default function Callback() {
     const router = useRouter();
@@ -36,7 +37,7 @@ export default function Callback() {
         fetchIdToken();
     }, [router.query]);
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <Loading/>;
     if (error) return <div>{error}</div>;
     return null;
 }

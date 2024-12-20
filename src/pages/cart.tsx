@@ -8,11 +8,6 @@ import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
 import { CartItem, CartViewItem } from '../app/model/cartItem';
 
-interface Tmp {
-    size: string; 
-    delta: number; 
-    remaining: number
-};
 
 export default function CartPage() {
     const router = useRouter();
@@ -23,7 +18,6 @@ export default function CartPage() {
     const [email, setEmail] = useState('');
 
     useEffect(() => {
-
         const token = localStorage.getItem('access-token');
         if (token) {
             try {
@@ -32,11 +26,10 @@ export default function CartPage() {
                 return ;
             } catch (error) {
                 console.error("無效的 JWT:", error);
-                localStorage.removeItem('access-token');
             }
+        } else {
+            router.push('/');
         }
-        alert('Error Occur...');
-        router.push('/');
     }, []);
 
     useEffect(() => {
@@ -102,7 +95,6 @@ export default function CartPage() {
         ).filter((item): item is CartViewItem => item !== undefined);
 
         // console.log(newCartViewItems);
-
         setCartViewItems(newCartViewItems);
         setIsLoading(false);
     }
@@ -227,7 +219,6 @@ export default function CartPage() {
         
     //     const newTimer = setTimeout(async () => {
     //         const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
-
     //         const requests = Object.keys(modificationCache)
     //             .filter((id) => modificationCache[id].delta !== 0)
     //             .map((id) => {
