@@ -100,30 +100,99 @@ export default function CartPage() {
         setCartViewItems(newCartViewItems);
         setIsLoading(false);
     }
+
+    const modifySpec = (key: number, value: string) => {
+
+    }
     
     if (isLoading) return <>loading</>
 
     return (
-        <div className="flex flex-col min-h-screen">
-            <div className="sticky top-0 z-50 bg-white shadow-md">
+        <div className="flex flex-col min-h-screen bg-gray-50">
+            {/* 導覽列 */}
+            <header className="sticky top-0 z-50 bg-white shadow-md">
                 <NavigationBar />
-            </div>
-            <section className="flex-1 mt-28 ml-16 px-4">
+            </header>
+    
+            {/* 購物車內容區 */}
+            <main className="flex flex-1 flex-col items-center py-8 px-4">
+                <h1 className="text-2xl font-bold text-gray-800 mb-6">Shopping Cart</h1>
+                
                 {cartViewItems && cartViewItems.length === 0 ? (
-                    <p className="text-center text-gray-600">The cart is empty</p>
+                    <div className="flex flex-col items-center justify-center text-center">
+                        <p className="text-gray-600 text-lg">The cart is empty</p>
+                    </div>
                 ) : (
-                    <ul className="space-y-4">
+                    <ul className="w-full max-w-4xl space-y-6">
                         {cartViewItems.map((item, index) => (
-                            <li key={index} className="flex items-center space-x-4">
-                                <input type="checkbox" className="mr-2" />
-                                <span title={item.product.name} className="text-gray-800">
-                                    {item.product.name}
-                                </span>
+                            <li key={index} className="bg-white shadow-md rounded-lg p-4 flex flex-col space-y-4">
+                                {/* 商品資訊 */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-4">
+                                        <input type="checkbox" className="w-5 h-5 text-blue-600 rounded" />
+                                        <p title={item.product.name} className="text-lg font-medium text-gray-800">
+                                            {item.product.name}
+                                        </p>
+                                    </div>
+                                    <button className="text-sm text-red-500 hover:underline">
+                                        Remove
+                                    </button>
+                                </div>
+    
+                                {/* 商品規格 */}
+                                <div className="mt-4">
+                        <h3 className="text-gray-700 font-semibold mb-2">Specifications</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            {Object.entries(item.spec).map(([key, value]) => (
+                                <div
+                                    key={key}
+                                    className="flex items-center justify-between bg-gray-100 p-4 rounded-md"
+                                >
+                                    {/* 規格名稱 */}
+                                    <span className="text-gray-800 font-medium">{key}</span>
+                                    {/* 增減按鈕區 */}
+                                    <div className="flex items-center space-x-2">
+                                        <button
+                                            onClick={() =>
+                                                modifySpec(index, key)
+                                            }
+                                            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                        >
+                                            -
+                                        </button>
+                                        <span className="text-gray-800 font-semibold">
+                                            {value}
+                                        </span>
+                                        <button
+                                            onClick={() =>
+                                                modifySpec(index, key)
+                                            }
+                                            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                             </li>
                         ))}
                     </ul>
                 )}
-            </section>
+            </main>
+    
+            {/* 底部結帳區 */}
+            {cartViewItems && cartViewItems.length > 0 && (
+                <footer className="bg-white shadow-md mt-auto py-4">
+                    <div className="max-w-4xl mx-auto flex justify-between items-center px-4">
+                        <p className="text-gray-800 text-lg font-semibold">Total: $XXX.XX</p>
+                        <button className="bg-blue-600 text-white px-6 py-2 rounded-md shadow hover:bg-blue-700">
+                            Proceed to Checkout
+                        </button>
+                    </div>
+                </footer>
+            )}
         </div>
     );
 }
