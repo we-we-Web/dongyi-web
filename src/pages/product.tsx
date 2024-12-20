@@ -126,7 +126,7 @@ export default function ProductContent({ product }: { product: Product }) {
     return (
         <div className="flex h-[100%] w-[100%] pt-[10vh]">
             <NavigationBar />
-            <div className='flex m-8'>
+            <div className='flex flex-col lg:flex-row m-8'>
                 <ProductImage id={product.id} name={product.name} isIndex={false} />
                 <div className="flex-col ml-10 space-y-6">
                     <h1 className="text-2xl font-bold">{product.name}</h1>
