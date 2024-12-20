@@ -1,7 +1,7 @@
 'use server'
 
 import React, { useEffect, useState } from 'react';
-import Product from '../app/model/product';
+import { Product, ProductSpec } from '../app/model/product';
 import NavigationBar from '../app/component/NavigationBar';
 import '../globals.css';
 import { GetServerSideProps } from 'next';
@@ -32,10 +32,10 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
 
 export default function ProductContent({ product }: { product: Product }) {
     const [email, setEmail] = useState('');
-    const [productNum, setProductNum] = useState(1);
     const [isLoginOpen, setLoginOpen] = useState(false);
     const [addingBtnText, setAddingBtnText] = useState('Add to Cart');
-   
+    const [selectedSpec, setSelectedSpec] = useState<ProductSpec | null>(null);
+    const [quantity, setQuantity] = useState(1);
     useEffect(() => {
         document.body.style.overflow = isLoginOpen ? 'hidden' : 'auto';
     }, [isLoginOpen]);
@@ -50,6 +50,9 @@ export default function ProductContent({ product }: { product: Product }) {
                 console.error("無效的 JWT:", error);
                 localStorage.removeItem('access-token');
             }
+        }
+        if (product && product.size.length > 0) {
+            setSelectedSpec(product.size[0]);
         }
     }, []);
 
@@ -67,8 +70,9 @@ export default function ProductContent({ product }: { product: Product }) {
         const request = {
             id: id,
             product: `${product?.id}`,
-            delta: productNum,
-            remaining: product?.remain_amount,
+            size: selectedSpec?.size,
+            delta: quantity,
+            remaining: selectedSpec?.remaining,
         }
         console.log('request body:', request);
         try {
@@ -101,16 +105,23 @@ export default function ProductContent({ product }: { product: Product }) {
         }, 600);
     };
 
+    
+    
     const add = () => {
-        setProductNum(productNum+1);
+        // if (quantity >= product.size.remaining) return ;
+        setQuantity(quantity+1);
     }
     const minus = () => {
-        if(productNum <= 2) setProductNum(1);
-        else setProductNum(productNum-1);
+        if (quantity <= 1) return ;
+        setQuantity(quantity-1);
     }
     const sizeEntries = product.size ? Object.entries(product.size).filter(([key, value]) => Number(value) > 0) : [];
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
+    const handleSizeClick = (size: string, remaining: number) => {
+        setSelectedSpec({ size: size, remaining: remaining });
+        setQuantity(1);
+    };
     if (!product) return <Loading/>;
     return (
         <div className="flex h-[100%] w-[100%] pt-[10vh]">
@@ -148,9 +159,11 @@ export default function ProductContent({ product }: { product: Product }) {
                                                              hover:text-[#9F79EE] text-[2em]">
                                 -
                             </button>
-                            <span className="w-20 text-center">{productNum}</span>
+                            <span className="w-20 text-center">{quantity}</span>
                             <button onClick={add} className="flex items-center justify-center 
-                                                            w-8 h-8 hover:text-[#9F79EE] text-[2em]">
+                                                            w-8 h-8 bg-gray-200 text-[2em]
+                                                            ${sizeQuantity.quantity === selectedSize?.quantity ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-400'}"
+                            disabled={quantity === selectedSpec?.remaining}>
                                 +
                             </button>
                         </div>

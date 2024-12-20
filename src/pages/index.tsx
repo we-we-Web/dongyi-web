@@ -1,6 +1,6 @@
 import { GetServerSideProps } from 'next';
 import ProductCard from '../app/component/ProductCard';
-import Product from '../app/model/product';
+import { Product } from '../app/model/product';
 import NavigationBar from '../app/component/NavigationBar';
 import '../globals.css';
 import { useEffect, useState } from 'react';
