@@ -101,9 +101,55 @@ export default function CartPage() {
         setIsLoading(false);
     }
 
-    const modifySpec = (key: number, value: string) => {
-
-    }
+    let debounceTimer: NodeJS.Timeout | null = null;
+    let modificationCache: { [key: string]: { size: string; delta: number; remaining: number } } = {};
+    
+    const modifySpec = (productID: string, size: string, delta: number, remaining: number, quantity: number) => {
+        if (!modificationCache[productID]) {
+            modificationCache[productID] = { size, delta: 0, remaining };
+        }
+        const tmp = quantity + modificationCache[productID].delta + delta;
+        if (tmp <= remaining && tmp >= 1) {
+            modificationCache[productID].delta += delta;
+            console.log('delta:', modificationCache[productID].delta);
+        }
+    
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
+        
+        debounceTimer = setTimeout(async () => {
+            const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
+            const requests = Object.keys(modificationCache).map((id) => ({
+                id: email,
+                product: id,
+                size: modificationCache[id].size,
+                delta: modificationCache[id].delta,
+                remaining: modificationCache[id].remaining,
+            }));
+    
+            console.log('Batch request:', requests);
+            try {
+                await Promise.all(
+                    requests.map((request) =>
+                        fetch(url, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(request),
+                        })
+                    )
+                );
+                console.log('All updates successful');
+            } catch (err) {
+                console.error('Error updating specs:', err);
+            }
+    
+            modificationCache = {};
+            debounceTimer = null;
+        }, 1500);
+    };
     
     if (isLoading) return <>loading</>
 
@@ -124,9 +170,8 @@ export default function CartPage() {
                     </div>
                 ) : (
                     <ul className="w-full max-w-4xl space-y-6">
-                        {cartViewItems.map((item, index) => (
-                            <li key={index} className="bg-white shadow-md rounded-lg p-4 flex flex-col space-y-4">
-                                {/* 商品資訊 */}
+                        {cartViewItems.map((item) => (
+                            <li key={item.product.id} className="bg-white shadow-md rounded-lg p-4 flex flex-col space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-4">
                                         <input type="checkbox" className="w-5 h-5 text-blue-600 rounded" />
@@ -141,41 +186,39 @@ export default function CartPage() {
     
                                 {/* 商品規格 */}
                                 <div className="mt-4">
-                        <h3 className="text-gray-700 font-semibold mb-2">Specifications</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            {Object.entries(item.spec).map(([key, value]) => (
-                                <div
-                                    key={key}
-                                    className="flex items-center justify-between bg-gray-100 p-4 rounded-md"
-                                >
-                                    {/* 規格名稱 */}
-                                    <span className="text-gray-800 font-medium">{key}</span>
-                                    {/* 增減按鈕區 */}
-                                    <div className="flex items-center space-x-2">
-                                        <button
-                                            onClick={() =>
-                                                modifySpec(index, key)
-                                            }
-                                            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                                        >
-                                            -
-                                        </button>
-                                        <span className="text-gray-800 font-semibold">
-                                            {value}
-                                        </span>
-                                        <button
-                                            onClick={() =>
-                                                modifySpec(index, key)
-                                            }
-                                            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                                        >
-                                            +
-                                        </button>
+                                    <h3 className="text-gray-700 font-semibold mb-2">Specifications</h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {Object.entries(item.spec).map(([key, value]) => (
+                                            <div
+                                                key={key}
+                                                className="flex items-center justify-between bg-gray-100 p-4 rounded-md"
+                                            >
+                                                <span className="text-gray-800 font-medium">Size: {key}</span>
+                                                <div className="flex items-center space-x-2">
+                                                    <button
+                                                        onClick={() =>
+                                                            modifySpec(item.product.id, key, -1, item.product.size[key], value)
+                                                        }
+                                                        className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <span className="text-gray-800 font-semibold">
+                                                        {value}
+                                                    </span>
+                                                    <button
+                                                        onClick={() =>
+                                                            modifySpec(item.product.id, key, 1, item.product.size[key], value)
+                                                        }
+                                                        className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
                             </li>
                         ))}
                     </ul>

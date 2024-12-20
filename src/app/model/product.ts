@@ -2,7 +2,7 @@ export interface Product {
     id: string
     name: string
     price: number
-    size: ProductSpec[]
+    size: ProductSpec
     image?: string
     description: string
     discount?: number
