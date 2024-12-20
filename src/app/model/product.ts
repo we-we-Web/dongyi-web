@@ -10,6 +10,5 @@ export interface Product {
 }
 
 export interface ProductSpec {
-    size: string
-    remaining: number
+    [key: string]: number
 }
