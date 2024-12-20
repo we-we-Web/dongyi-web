@@ -8,6 +8,12 @@ import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
 import { CartItem, CartViewItem } from '../app/model/cartItem';
 
+interface Tmp {
+    size: string; 
+    delta: number; 
+    remaining: number
+};
+
 export default function CartPage() {
     const router = useRouter();
 
@@ -95,72 +101,182 @@ export default function CartPage() {
             )
         ).filter((item): item is CartViewItem => item !== undefined);
 
-        console.log(newCartViewItems);
+        // console.log(newCartViewItems);
 
         setCartViewItems(newCartViewItems);
         setIsLoading(false);
     }
 
-    let debounceTimer: NodeJS.Timeout | null = null;
-    let modificationCache: { [key: string]: { size: string; delta: number; remaining: number } } = {};
+    const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+    const [modificationCache, setModificationCache] = useState<{
+        [key: string]: Tmp
+    }>({});
+
+    const initializeCache = (productID: string, size: string, remaining: number) => {
+        let cacheInitialized = false;
+        let initializedCache: { size: string; delta: number; remaining: number } = { size, delta: 0, remaining };
     
-    const modifySpec = (productID: string, size: string, delta: number, remaining: number, quantity: number) => {
-        if (!modificationCache[productID]) {
-            modificationCache[productID] = { size, delta: 0, remaining };
-        }
-        const tmp = quantity + modificationCache[productID].delta + delta;
-        if (tmp <= remaining && tmp >= 1) {
-            modificationCache[productID].delta += delta;
-            console.log('delta:', modificationCache[productID].delta);
-        }
-    
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-        }
-        
-        debounceTimer = setTimeout(async () => {
-            const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
-            const requests = Object.keys(modificationCache).map((id) => ({
-                id: email,
-                product: id,
-                size: modificationCache[id].size,
-                delta: modificationCache[id].delta,
-                remaining: modificationCache[id].remaining,
-            }));
-    
-            console.log('Batch request:', requests);
-            try {
-                await Promise.all(
-                    requests.map((request) =>
-                        fetch(url, {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(request),
-                        })
-                    )
-                );
-                console.log('All updates successful');
-            } catch (err) {
-                console.error('Error updating specs:', err);
+        setModificationCache((prevCache) => {
+            // 如果快取尚未初始化
+            if (!prevCache[productID]) {
+                cacheInitialized = true;
+                return {
+                    ...prevCache,
+                    [productID]: initializedCache,
+                };
             }
+            initializedCache = prevCache[productID];
+            return prevCache;
+        });
     
-            modificationCache = {};
-            debounceTimer = null;
-        }, 1500);
+        // 返回最新的快取值
+        if (!cacheInitialized) {
+            initializedCache = modificationCache[productID];
+        }
+        return initializedCache;
     };
+    
+    const modifySpec = async(productID: string, size: string, delta: number, remaining: number, quantity: number) => {
+        const res = quantity + delta;
+        if (res >= remaining || res <= 0) return ;
+        setCartViewItems((prevItems) =>
+            prevItems.map((item) => {
+                if (item.product.id === productID) {
+                    const updatedSpec = {
+                        ...item.spec,
+                        [size]: item.spec[size] + delta,
+                    };
+                    return {
+                        ...item,
+                        spec: updatedSpec,
+                    };
+                }
+                return item;
+            })
+        );
+        const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
+        const request = {
+            id: email,
+            product: `${productID}`,
+            size: size,
+            delta: delta,
+            remaining: remaining,
+        };
+        console.log(request);
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(request),
+            });
+            if (!response.ok) {
+                console.log('failed to modify spec:', response.status);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+        // while(!modificationCache[productID]) {
+        //     setModificationCache((prevCache) => {
+        //         const newCache = { ...prevCache };
+        //         newCache[productID] = {size, delta: 0, remaining};
+        //         return newCache;
+        //     })
+        // }
+    //     initializeCache(productID, size, remaining);
+    //     console.log(modificationCache);
+
+    //     setModificationCache((prevCache) => {
+    //         let newCache = { ...prevCache };
+    //         if (!newCache[productID]) {
+    //             newCache[productID] = {
+    //                 size: size,
+    //                 delta: 0,
+    //                 remaining: remaining,
+    //             };
+    //         }
+    //         const tmp = quantity + newCache[productID].delta;
+
+    //         if (tmp <= remaining && tmp >= 1) {
+    //             newCache[productID].delta += delta;
+    //             setCartViewItems((prevItems) =>
+    //                 prevItems.map((item) => {
+    //                     if (item.product.id === productID) {
+    //                         const updatedSpec = {
+    //                             ...item.spec,
+    //                             [size]: item.spec[size] + delta,
+    //                         };
+    //                         return {
+    //                             ...item,
+    //                             spec: updatedSpec,
+    //                         };
+    //                     }
+    //                     return item;
+    //                 })
+    //             );
+    //         }
+    //         return newCache;
+    //     });
+    //     console.log('current cache:', modificationCache[productID]);
+    
+    //     if (debounceTimer) {
+    //         clearTimeout(debounceTimer);
+    //     }
+        
+    //     const newTimer = setTimeout(async () => {
+    //         const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
+
+    //         const requests = Object.keys(modificationCache)
+    //             .filter((id) => modificationCache[id].delta !== 0)
+    //             .map((id) => {
+    //                 let delta = modificationCache[id].delta;
+    //                 if (delta < 0) delta += 1;
+    //                 else if (delta > 0) delta -= 1;
+    //                 return {
+    //                     id: email,
+    //                     product: id,
+    //                     size: modificationCache[id].size,
+    //                     delta: delta,
+    //                     remaining: modificationCache[id].remaining,
+    //                 };
+    //             });
+
+    //         console.log('Batch request:', requests);
+    //         setModificationCache({});
+    //         if (requests.length === 0) return ;
+    //         try {
+    //             await Promise.all(
+    //                 requests.map((request) =>
+    //                     fetch(url, {
+    //                         method: 'PATCH',
+    //                         headers: {
+    //                             'Content-Type': 'application/json',
+    //                         },
+    //                         body: JSON.stringify(request),
+    //                     })
+    //                 )
+    //             );
+    //             console.log('All updates successful');
+    //         } catch (err) {
+    //             console.error('Error updating specs:', err);
+    //         }
+
+    //         setDebounceTimer(null);
+    //     }, 1200);
+
+    //     setDebounceTimer(newTimer);
+    // };
     
     if (isLoading) return <>loading</>
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-50">
-            {/* 導覽列 */}
             <header className="sticky top-0 z-50 bg-white shadow-md">
                 <NavigationBar />
             </header>
     
-            {/* 購物車內容區 */}
             <main className="flex flex-1 flex-col items-center py-8 px-4">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6">Shopping Cart</h1>
                 
@@ -184,7 +300,6 @@ export default function CartPage() {
                                     </button>
                                 </div>
     
-                                {/* 商品規格 */}
                                 <div className="mt-4">
                                     <h3 className="text-gray-700 font-semibold mb-2">Specifications</h3>
                                     <div className="grid grid-cols-2 gap-4">
@@ -199,7 +314,9 @@ export default function CartPage() {
                                                         onClick={() =>
                                                             modifySpec(item.product.id, key, -1, item.product.size[key], value)
                                                         }
-                                                        className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                                        disabled={value-1 <= 0}
+                                                        className={`px-3 py-1 bg-gray-200 rounded hover:bg-gray-300
+                                                                    ${value <= 1 && 'bg-gray-400 cursor-not-allowed hover:bg-gray-400'}`}
                                                     >
                                                         -
                                                     </button>
@@ -210,7 +327,9 @@ export default function CartPage() {
                                                         onClick={() =>
                                                             modifySpec(item.product.id, key, 1, item.product.size[key], value)
                                                         }
-                                                        className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                                        disabled={value >= item.product.size[key]}
+                                                        className={`px-3 py-1 bg-gray-200 rounded hover:bg-gray-300
+                                                            ${value >= item.product.size[key] && 'bg-gray-400 cursor-not-allowed hover:bg-gray-400'}`}
                                                     >
                                                         +
                                                     </button>
@@ -225,7 +344,6 @@ export default function CartPage() {
                 )}
             </main>
     
-            {/* 底部結帳區 */}
             {cartViewItems && cartViewItems.length > 0 && (
                 <footer className="bg-white shadow-md mt-auto py-4">
                     <div className="max-w-4xl mx-auto flex justify-between items-center px-4">
