@@ -116,7 +116,6 @@ export default function ProductContent({ product }: { product: Product }) {
                 ...prev,
                 quantity: selectedSize?.quantity,
             }));
-            setShowPopup(true);
         }   
     }
     const minus = () => {

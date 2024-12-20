@@ -2,6 +2,7 @@
 import LogoutButton from '../app/component/LogoutButton';
 import { jwtDecode } from 'jwt-decode';
 import { UserProfile } from '../app/model/userProfile';
+import Link from 'next/link';
 
 const User: React.FC = () => {
     const [email, setEmail] = useState<string | null>(null);
@@ -21,6 +22,7 @@ const User: React.FC = () => {
     return (
         <div>
             <p>{email}</p>
+            <Link href="history">訂單紀錄</Link>
             <LogoutButton />
         </div>
     );
