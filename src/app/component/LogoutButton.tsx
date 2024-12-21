@@ -10,7 +10,10 @@ const LogoutButton: React.FC = () => {
     };
 
     return (
-        <button onClick={handleLogout} style={{ border: '1px solid black' }}>
+        <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg shadow hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transition"
+        >
             登出
         </button>
     );

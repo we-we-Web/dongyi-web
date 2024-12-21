@@ -43,8 +43,12 @@ export default function CartPage() {
     }, [email]);
 
     useEffect(() => {
-        if (cartItems && cartItems.length > 0) {
-            setupCart();
+        if (cartItems) {
+            if (cartItems.length > 0) {
+                setupCart();
+            } else {
+                setIsLoading(false);
+            }
         }
     }, [cartItems]);
 
@@ -243,6 +247,100 @@ export default function CartPage() {
         }
         setTimeout(() => setToast(null), 1500);
     };
+
+    const createOrder = async() => {
+        const url = 'https://dongyi-api.hnd1.zeabur.app/order/api/order-create';
+        const content = cartViewItems.filter((item) => item.isSelected).map(item => {
+            return {
+                id: item.product.id,
+                price: item.product.price,
+                spec: item.spec,
+            };
+        })
+        const request = {
+            owner: email,
+            content: content,
+        };
+        console.log(request);
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(request),
+            })
+            if (response.ok) {
+                setToast({ message: "Create order successfully!", type: "success" });
+                const result = await response.json();
+                return result.id;
+            } else {
+                setToast({ message: `Ocurr an error when create order: ${response.status}`, type: "error" });
+            }
+        } catch (err) {
+            console.log(err);
+            setToast({ message: `Failed to create order: ${err}`, type: "error" });
+        }
+        setTimeout(() => setToast(null), 1500);
+    }
+
+    const clearCart = async() => {
+        const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/cart-clear';
+        const request = {
+            id: email,
+        };
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(request),
+            });
+            if (response.ok) {
+                setToast({ message: "Create order successfully!", type: "success" });
+                const result = await response.json();
+                return result.id;
+            } else {
+                setToast({ message: `Ocurr an error when create order: ${response.status}`, type: "error" });
+            }
+        } catch (err) {
+            console.log(err);
+            setToast({ message: `Failed to create order: ${err}`, type: "error" });
+        }
+        setTimeout(() => setToast(null), 1500);
+    }
+
+    const placeOrder = async() => {
+        // create order -> add order to user -> clear cart -> navigate to order page
+        const id = await createOrder();
+        if (!id) return ;
+        const url = 'https://dongyi-api.hnd1.zeabur.app/user/account/order-add';
+        const request = {
+            id: email,
+            order: id,
+        };
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(request),
+            })
+            if (response.ok) {
+                setToast({ message: "Place order successfully!", type: "success" });
+            } else {
+                setToast({ message: `Ocurr an error when place order: ${response.status}`, type: "error" });
+            }
+        } catch (err) {
+            console.log(err);
+            setToast({ message: `Failed to place order: ${err}`, type: "error" });
+        }
+        clearCart();
+        setTimeout(() => setToast(null), 1500);
+        router.push(`/order?id=${id}`);
+    }
     
     if (isLoading) return <Loading />
 
@@ -344,7 +442,10 @@ export default function CartPage() {
                 <footer className="bg-white shadow-md mt-auto py-4">
                     <div className="max-w-4xl mx-auto flex justify-between items-center px-4">
                         <p className="text-gray-800 text-lg font-semibold">Total: ${totalPrice}</p>
-                        <button className="bg-violet-500 text-white px-6 py-2 rounded-md shadow hover:bg-violet-700">
+                        <button 
+                            onClick={() => placeOrder() }
+                            className="bg-violet-500 text-white px-6 py-2 rounded-md shadow hover:bg-violet-700"
+                        >
                             Place Order
                         </button>
                     </div>
