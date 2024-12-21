@@ -4,6 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import { UserProfile } from '../app/model/userProfile';
 import { useRouter } from 'next/router';
 import Loading from '../app/component/Loading';
+import Link from 'next/link';
 
 interface User {
     id: string,
@@ -95,10 +96,10 @@ function User() {
             <p>{user.name}</p>
             { user && user.orders && user.orders.length === 0 ? 
                 <p>no orders...</p> : 
-                user.orders.map((item, index) => item && (
-                    <div key={index}>
+                user.orders.map(item => item && (
+                    <Link href={`/order?id=${item}`} key={item}>
                         <p>{item}</p>
-                    </div>
+                    </Link>
                 ))
             }
             <LogoutButton />
