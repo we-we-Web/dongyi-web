@@ -119,7 +119,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
             <div className="bg-white shadow-lg rounded-lg p-8 max-w-4xl w-full mt-20">
                 <div className="flex flex-col md:flex-row md:space-x-8">
                     <div className="flex-1 rounded-lg border border-slate-300">
-                        <ProductImage id={product.id} name={product.name} isIndex={false} />
+                        <ProductImage id={product.id} name={product.name} isIndex={false} index={0}/>
                     </div>
 
                     <div className="flex-1 flex flex-col space-y-4">
