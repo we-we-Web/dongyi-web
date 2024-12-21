@@ -359,7 +359,7 @@ export default function CartPage() {
                     </div>
                 ) : (
                     <ul className="w-full max-w-4xl space-y-6">
-                        {cartViewItems.map((item, index) => (
+                        {cartViewItems.map(item => (
                             <li key={item.product.id} className="bg-white shadow-md rounded-lg p-4 flex flex-col space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-4">
