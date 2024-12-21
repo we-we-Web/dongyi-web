@@ -9,13 +9,8 @@ import { ProductSpec } from '../app/model/product';
 import Loading from '../app/component/Loading';
 import NavigationBar from '../app/component/NavigationBar';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
-
-export const getServerSideProps: GetServerSideProps = async(context) => {
-    const orderId = context.query!;
-
-    return { props: { orderId } };
-}
 
 interface OrderItem {
     id: string
@@ -31,7 +26,9 @@ interface OrderViewItem {
     spec: ProductSpec
 }
 
-export default function OrderPage({orderId}: {orderId: string}) {
+export default function OrderPage() {
+    const router = useRouter();
+    const { id } = router.query;
     const [orderItems, setOrderItems] = useState<OrderItem[] | null>(null);
     const [orderViewItems, setOrderViewItems] = useState<OrderViewItem[] | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -50,10 +47,10 @@ export default function OrderPage({orderId}: {orderId: string}) {
             }
         }
     
-        const fetchOrder = async(id: any, email: string) => {
+        const fetchOrder = async(id: string, email: string) => {
             const url = 'https://dongyi-api.hnd1.zeabur.app/order/api/order-get';
             const request = {
-                id: `${id.id}`,
+                id: `${id}`,
                 owner: email,
             };
             try {
@@ -72,10 +69,9 @@ export default function OrderPage({orderId}: {orderId: string}) {
                 console.log(err);
             }
         }
-    
         const email: string = getEmail()!;
-        if (orderId && email) {
-            fetchOrder(orderId, email);
+        if (id && typeof id === 'string' && email) {
+            fetchOrder(id, email);
         }
     }, []);
 
