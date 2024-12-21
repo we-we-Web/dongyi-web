@@ -99,34 +99,10 @@ export default function CartPage() {
         setIsLoading(false);
     }
 
-    const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
-    const [modificationCache, setModificationCache] = useState<{
-        [key: string]: Tmp
-    }>({});
-
-    const initializeCache = (productID: string, size: string, remaining: number) => {
-        let cacheInitialized = false;
-        let initializedCache: { size: string; delta: number; remaining: number } = { size, delta: 0, remaining };
-    
-        setModificationCache((prevCache) => {
-            // 如果快取尚未初始化
-            if (!prevCache[productID]) {
-                cacheInitialized = true;
-                return {
-                    ...prevCache,
-                    [productID]: initializedCache,
-                };
-            }
-            initializedCache = prevCache[productID];
-            return prevCache;
-        });
-    
-        // 返回最新的快取值
-        if (!cacheInitialized) {
-            initializedCache = modificationCache[productID];
-        }
-        return initializedCache;
-    };
+    // const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+    // const [modificationCache, setModificationCache] = useState<{
+    //     [key: string]: Tmp
+    // }>({});
     
     const modifySpec = async(productID: string, size: string, delta: number, remaining: number, quantity: number) => {
         const res = quantity + delta;
