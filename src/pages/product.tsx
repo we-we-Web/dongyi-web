@@ -1,15 +1,13 @@
 'use server'
 
 import React, { useEffect, useState } from 'react';
-import { Product, ProductSpec } from '../app/model/product';
+import { Product } from '../app/model/product';
 import NavigationBar from '../app/component/NavigationBar';
-import '../globals.css';
 import { GetServerSideProps } from 'next';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
-import LoginPopup from '../app/component/LoginPopup';
-import Loading from '../app/component/Loading';
 import ProductImage from '../app/component/ProductImage';
+import '../globals.css';
 
 export const getServerSideProps: GetServerSideProps = async(context) => {
     const ProductId = context.query!;
@@ -32,6 +30,9 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
 
 export default function ProductContent({ product }: { product: Product }) {
     const [email, setEmail] = useState('');
+    const [selectedSize, setSelectedSize] = useState<string | null>(null);
+    const [quantity, setQuantity] = useState<number>(1);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -45,10 +46,6 @@ export default function ProductContent({ product }: { product: Product }) {
             }
         }
     }, []);
-    
-    const [selectedSize, setSelectedSize] = useState<string | null>(null);
-    const [quantity, setQuantity] = useState<number>(1);
-    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     const handleSizeSelect = (size: string) => {
         setSelectedSize(size);

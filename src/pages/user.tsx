@@ -3,6 +3,7 @@ import LogoutButton from '../app/component/LogoutButton';
 import { jwtDecode } from 'jwt-decode';
 import { UserProfile } from '../app/model/userProfile';
 import { useRouter } from 'next/router';
+import Loading from '../app/component/Loading';
 
 interface User {
     id: string,
@@ -84,7 +85,7 @@ function User() {
     };
 
     if (!user) {
-        return "Loading...";
+        return <Loading />;
     }
 
     return (

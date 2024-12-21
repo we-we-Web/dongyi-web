@@ -7,6 +7,8 @@ import '../globals.css';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
 import { CartItem, CartViewItem } from '../app/model/cartItem';
+import Loading from '../app/component/Loading';
+import Link from 'next/link';
 
 
 export default function CartPage() {
@@ -16,6 +18,7 @@ export default function CartPage() {
     const [cartViewItems, setCartViewItems] = useState<CartViewItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [email, setEmail] = useState('');
+    const [totalPrice, setTotalPrice] = useState<number>(0);
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -73,6 +76,18 @@ export default function CartPage() {
         }
     }
 
+    useEffect(() => {
+        const calculateTotalPrice = () => {
+            const total = cartViewItems.filter((item) => item.isSelected).reduce((sum, item) => {
+                const itemTotal = item.product.price * Object.values(item.spec).reduce((a, b) => a + b, 0);
+                return sum + itemTotal;
+            }, 0);
+            setTotalPrice(total);
+        };
+
+        calculateTotalPrice();
+    }, [cartViewItems]);
+
     const setupCart = async() => { // parse CartItem into CartViewItem
         if (!cartItems || cartItems.length <= 0) return ;
 
@@ -98,11 +113,6 @@ export default function CartPage() {
         setCartViewItems(newCartViewItems);
         setIsLoading(false);
     }
-
-    // const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
-    // const [modificationCache, setModificationCache] = useState<{
-    //     [key: string]: Tmp
-    // }>({});
     
     const modifySpec = async(productID: string, size: string, delta: number, remaining: number, quantity: number) => {
         const res = quantity + delta;
@@ -146,97 +156,24 @@ export default function CartPage() {
             console.log(err);
         }
     }
-        // while(!modificationCache[productID]) {
-        //     setModificationCache((prevCache) => {
-        //         const newCache = { ...prevCache };
-        //         newCache[productID] = {size, delta: 0, remaining};
-        //         return newCache;
-        //     })
-        // }
-    //     initializeCache(productID, size, remaining);
-    //     console.log(modificationCache);
 
-    //     setModificationCache((prevCache) => {
-    //         let newCache = { ...prevCache };
-    //         if (!newCache[productID]) {
-    //             newCache[productID] = {
-    //                 size: size,
-    //                 delta: 0,
-    //                 remaining: remaining,
-    //             };
-    //         }
-    //         const tmp = quantity + newCache[productID].delta;
+    const calculateItemTotal = (item: CartViewItem) => {
+        return (
+            item.product.price * Object.values(item.spec).reduce((a, b) => a + b, 0)
+        );
+    };
 
-    //         if (tmp <= remaining && tmp >= 1) {
-    //             newCache[productID].delta += delta;
-    //             setCartViewItems((prevItems) =>
-    //                 prevItems.map((item) => {
-    //                     if (item.product.id === productID) {
-    //                         const updatedSpec = {
-    //                             ...item.spec,
-    //                             [size]: item.spec[size] + delta,
-    //                         };
-    //                         return {
-    //                             ...item,
-    //                             spec: updatedSpec,
-    //                         };
-    //                     }
-    //                     return item;
-    //                 })
-    //             );
-    //         }
-    //         return newCache;
-    //     });
-    //     console.log('current cache:', modificationCache[productID]);
+    const toggleSelection = (productId: string) => {
+        setCartViewItems((prevItems) =>
+            prevItems.map((item) =>
+                item.product.id === productId
+                    ? { ...item, isSelected: !item.isSelected }
+                    : item
+            )
+        );
+    };
     
-    //     if (debounceTimer) {
-    //         clearTimeout(debounceTimer);
-    //     }
-        
-    //     const newTimer = setTimeout(async () => {
-    //         const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
-    //         const requests = Object.keys(modificationCache)
-    //             .filter((id) => modificationCache[id].delta !== 0)
-    //             .map((id) => {
-    //                 let delta = modificationCache[id].delta;
-    //                 if (delta < 0) delta += 1;
-    //                 else if (delta > 0) delta -= 1;
-    //                 return {
-    //                     id: email,
-    //                     product: id,
-    //                     size: modificationCache[id].size,
-    //                     delta: delta,
-    //                     remaining: modificationCache[id].remaining,
-    //                 };
-    //             });
-
-    //         console.log('Batch request:', requests);
-    //         setModificationCache({});
-    //         if (requests.length === 0) return ;
-    //         try {
-    //             await Promise.all(
-    //                 requests.map((request) =>
-    //                     fetch(url, {
-    //                         method: 'PATCH',
-    //                         headers: {
-    //                             'Content-Type': 'application/json',
-    //                         },
-    //                         body: JSON.stringify(request),
-    //                     })
-    //                 )
-    //             );
-    //             console.log('All updates successful');
-    //         } catch (err) {
-    //             console.error('Error updating specs:', err);
-    //         }
-
-    //         setDebounceTimer(null);
-    //     }, 1200);
-
-    //     setDebounceTimer(newTimer);
-    // };
-    
-    if (isLoading) return <>loading</>
+    if (isLoading) return <Loading />
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-50">
@@ -244,7 +181,7 @@ export default function CartPage() {
                 <NavigationBar />
             </header>
     
-            <main className="flex flex-1 flex-col items-center py-8 px-4">
+            <main className="flex flex-1 flex-col items-center py-8 px-4 mt-20">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6">Shopping Cart</h1>
                 
                 {cartViewItems && cartViewItems.length === 0 ? (
@@ -253,14 +190,23 @@ export default function CartPage() {
                     </div>
                 ) : (
                     <ul className="w-full max-w-4xl space-y-6">
-                        {cartViewItems.map((item) => (
+                        {cartViewItems.map((item, index) => (
                             <li key={item.product.id} className="bg-white shadow-md rounded-lg p-4 flex flex-col space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-4">
-                                        <input type="checkbox" className="w-5 h-5 text-blue-600 rounded" />
+                                        <input 
+                                            type="checkbox" 
+                                            onClick={() => toggleSelection(item.product.id)}
+                                            className="w-5 h-5 text-blue-600 rounded" 
+                                        />
+                                        <Link href={`/product?id=${item.product.id}`}>
                                         <p title={item.product.name} className="text-lg font-medium text-gray-800">
                                             {item.product.name}
                                         </p>
+                                        <p className="text-gray-600">
+                                            ${item.product.price}
+                                        </p>
+                                        </Link>
                                     </div>
                                     <button className="text-sm text-red-500 hover:underline">
                                         Remove
@@ -305,6 +251,9 @@ export default function CartPage() {
                                         ))}
                                     </div>
                                 </div>
+                                <p className="mt-2 text-right text-gray-800 font-semibold">
+                                    Total: ${calculateItemTotal(item).toFixed(2)}
+                                </p>
                             </li>
                         ))}
                     </ul>
@@ -314,8 +263,8 @@ export default function CartPage() {
             {cartViewItems && cartViewItems.length > 0 && (
                 <footer className="bg-white shadow-md mt-auto py-4">
                     <div className="max-w-4xl mx-auto flex justify-between items-center px-4">
-                        <p className="text-gray-800 text-lg font-semibold">Total: $XXX.XX</p>
-                        <button className="bg-blue-600 text-white px-6 py-2 rounded-md shadow hover:bg-blue-700">
+                        <p className="text-gray-800 text-lg font-semibold">Total: ${totalPrice}</p>
+                        <button className="bg-violet-500 text-white px-6 py-2 rounded-md shadow hover:bg-blue-700">
                             Proceed to Checkout
                         </button>
                     </div>

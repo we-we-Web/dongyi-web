@@ -1,4 +1,4 @@
-import Product from "../model/product";
+import { Product } from "../model/product";
 import { useRouter } from 'next/router';
 import ProductImage from "./ProductImage";
 
@@ -56,12 +56,6 @@ export default function ProductCard({ product }: { product: Product}) {
                                 {product.discount}% off
                             </span>
                         </p>
-                    </div>
-                )}
-                {product.rating && (
-                    <div className="mt-2">
-                        {getStarRating(product.rating)}
-                        <p className="text-sm text-gray-500 mt-1">{product.rating} / 5</p>
                     </div>
                 )}
             </div>
