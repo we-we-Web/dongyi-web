@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; 
 import NavigationBar from '../app/component/NavigationBar';
-import '../globals.css';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
 import { CartItem, CartViewItem } from '../app/model/cartItem';
 import Loading from '../app/component/Loading';
 import Link from 'next/link';
-
+import { FaRegTrashAlt } from "react-icons/fa";
+import '../globals.css';
 
 export default function CartPage() {
     const router = useRouter();
@@ -19,6 +19,7 @@ export default function CartPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [email, setEmail] = useState('');
     const [totalPrice, setTotalPrice] = useState<number>(0);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -172,6 +173,76 @@ export default function CartPage() {
             )
         );
     };
+
+    const deleteProductItem = async(productId: string) => {
+        setCartViewItems((prevItems) =>
+            prevItems.filter((item) => item.product.id !== productId)
+        );
+        const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-remove';
+        const request = {
+            id: email,
+            product: `${productId}`,
+        };
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(request),
+            });
+            if (response.ok) {
+                setToast({ message: "Remove successfully!", type: "success" });
+            } else {
+                setToast({ message: `Ocurr an error when remove: ${response.status}`, type: "error" });
+            }
+        } catch (err) {
+            console.log(err);
+            setToast({ message: `Failed to remove: ${err}`, type: "error" });
+        }
+        setTimeout(() => setToast(null), 1500);
+    };
+
+    const deleteProductSpec = async(productId: string, specKey: string, quantity: number) => {
+        setCartViewItems((prevItems) =>
+            prevItems.map((item) =>
+                item.product.id === productId
+                    ? {
+                          ...item,
+                          spec: Object.fromEntries(
+                              Object.entries(item.spec).filter(([key]) => key !== specKey)
+                          ),
+                      }
+                    : item
+            )
+        );
+        const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
+        const request = {
+            id: email,
+            product: `${productId}`,
+            size: specKey,
+            delta: -quantity,
+            remaining: 100,
+        };
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(request),
+            });
+            if (response.ok) {
+                setToast({ message: "Remove successfully!", type: "success" });
+            } else {
+                setToast({ message: `Ocurr an error when remove: ${response.status}`, type: "error" });
+            }
+        } catch (err) {
+            console.log(err);
+            setToast({ message: `Failed to remove: ${err}`, type: "error" });
+        }
+        setTimeout(() => setToast(null), 1500);
+    };
     
     if (isLoading) return <Loading />
 
@@ -208,8 +279,11 @@ export default function CartPage() {
                                         </p>
                                         </Link>
                                     </div>
-                                    <button className="text-sm text-red-500 hover:underline">
-                                        Remove
+                                    <button 
+                                        onClick={() => deleteProductItem(item.product.id)}
+                                        className="text-sm text-red-500 hover:opacity-50"
+                                    >
+                                        <FaRegTrashAlt size={20} />
                                     </button>
                                 </div>
     
@@ -246,6 +320,12 @@ export default function CartPage() {
                                                     >
                                                         +
                                                     </button>
+                                                    <button 
+                                                        onClick={() => deleteProductSpec(item.product.id, key, item.product.size[key])}
+                                                        className='pl-4 hover:opacity-50'
+                                                    >
+                                                        <FaRegTrashAlt />
+                                                    </button>
                                                 </div>
                                             </div>
                                         ))}
@@ -264,11 +344,20 @@ export default function CartPage() {
                 <footer className="bg-white shadow-md mt-auto py-4">
                     <div className="max-w-4xl mx-auto flex justify-between items-center px-4">
                         <p className="text-gray-800 text-lg font-semibold">Total: ${totalPrice}</p>
-                        <button className="bg-violet-500 text-white px-6 py-2 rounded-md shadow hover:bg-blue-700">
-                            Proceed to Checkout
+                        <button className="bg-violet-500 text-white px-6 py-2 rounded-md shadow hover:bg-violet-700">
+                            Place Order
                         </button>
                     </div>
                 </footer>
+            )}
+            {toast && (
+                <div
+                    className={`fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white ${
+                        toast.type === "success" ? "bg-green-500" : "bg-red-500"
+                    }`}
+                >
+                    {toast.message}
+                </div>
             )}
         </div>
     );
