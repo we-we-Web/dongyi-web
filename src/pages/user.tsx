@@ -5,6 +5,7 @@ import { UserProfile } from '../app/model/userProfile';
 import { useRouter } from 'next/router';
 import Loading from '../app/component/Loading';
 import Link from 'next/link';
+import NavigationBar from '../app/component/NavigationBar';
 
 interface User {
     id: string,
@@ -90,20 +91,51 @@ function User() {
     }
 
     return (
-        <div>
-            <button onClick={() => router.push('/')}>back</button>
-            <p>{user.id}</p>
-            <p>{user.name}</p>
-            { user && user.orders && user.orders.length === 0 ? 
-                <p>no orders...</p> : 
-                user.orders.map(item => item && (
-                    <Link href={`/order?id=${item}`} key={item}>
-                        <p>{item}</p>
-                    </Link>
-                ))
-            }
-            <LogoutButton />
-        </div>
+        <>
+            <NavigationBar />
+            <div className="mt-28 px-6 max-w-4xl mx-auto">
+                {/* 使用者資訊區 */}
+                <div className="bg-white shadow-md rounded-lg p-6 mb-8">
+                    <h1 className="text-2xl font-bold text-gray-800">Hello, {user.name}</h1>
+                    <p className="text-gray-600">Email: {user.id}</p>
+                    <p className="text-gray-600">
+                        Member since: {new Date(user.created_at).toLocaleDateString()}
+                    </p>
+                    <p className="text-gray-600">
+                        Last updated: {new Date(user.updated_at).toLocaleDateString()}
+                    </p>
+                </div>
+
+                {/* 訂單列表 */}
+                <div className="bg-white shadow-md rounded-lg p-6">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Orders</h2>
+                    {user.orders && user.orders.length > 0 ? (
+                        <ul className="space-y-4">
+                            {user.orders.map((orderId) => (
+                                <li key={orderId} className="flex justify-between items-center">
+                                    <span className="text-gray-500">
+                                        Order #{orderId}
+                                    </span>
+                                    <Link 
+                                        href={`/order?id=${orderId}`} 
+                                        className="text-purple-600 text-sm hover:underline"
+                                    >
+                                        View Details
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-gray-600">You have no orders yet.</p>
+                    )}
+                </div>
+
+                {/* 登出按鈕 */}
+                <div className="text-right mt-6">
+                    <LogoutButton />
+                </div>
+            </div>
+        </>
     );
 };
 
