@@ -1,7 +1,6 @@
 'use client'
 
 import '../globals.css';
-import { GetServerSideProps } from 'next';
 import { jwtDecode } from 'jwt-decode';
 import { UserProfile } from '../app/model/userProfile';
 import { useEffect, useState } from 'react';
