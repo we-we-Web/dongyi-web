@@ -95,6 +95,7 @@ export default function ProductContent({ product }: { product: Product }) {
                 setToast({ message: `Occur an error when add to cart: ${response.status}`, type: "error" });
             }
         } catch (error) {
+            console.log(error);
             setToast({ message: "Failed to add to cart.", type: "error" });
         }
 
