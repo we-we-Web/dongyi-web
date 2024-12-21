@@ -47,8 +47,8 @@ export default function ProductContent({ product }: { product: Product }) {
     }, []);
     
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
-
     const [quantity, setQuantity] = useState<number>(1);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     const handleSizeSelect = (size: string) => {
         setSelectedSize(size);
@@ -67,6 +67,41 @@ export default function ProductContent({ product }: { product: Product }) {
 
     const handleQuantityDecrease = () => {
         setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+    };
+
+    const handleAddToCart = async () => {
+        if (!selectedSize) {
+            setToast({ message: "Please select a size.", type: "error" });
+            setTimeout(() => setToast(null), 3000);
+            return;
+        }
+        const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
+        const request = {
+            id: email,
+            product: `${product.id}`,
+            size: selectedSize,
+            delta: quantity,
+            remaining: product.size[selectedSize],
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(request),
+            })
+            if (response.ok) {
+                setToast({ message: "Added to cart successfully!", type: "success" });
+            } else {
+                setToast({ message: `Occur an error when add to cart: ${response.status}`, type: "error" });
+            }
+        } catch (error) {
+            setToast({ message: "Failed to add to cart.", type: "error" });
+        }
+
+        setTimeout(() => setToast(null), 3000);
     };
 
     return (
@@ -143,12 +178,23 @@ export default function ProductContent({ product }: { product: Product }) {
                             </div>
                         </div>
 
-                        <button className="bg-violet-500 text-white px-6 py-3 rounded-lg shadow hover:bg-violet-700">
+                        <button 
+                            onClick={() => handleAddToCart()}
+                            className="bg-violet-500 text-white px-6 py-3 rounded-lg shadow hover:bg-violet-700">
                             Add to Cart
                         </button>
                     </div>
                 </div>
             </div>
+            {toast && (
+                <div
+                    className={`fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white ${
+                        toast.type === "success" ? "bg-green-500" : "bg-red-500"
+                    }`}
+                >
+                    {toast.message}
+                </div>
+            )}
         </div>
     );
 }
