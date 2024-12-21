@@ -91,6 +91,11 @@ export default function admin({ product }: { product: Product}) {
                 },
                 body: JSON.stringify(request),
             });
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                await sendImg(formData, newProduct.id ? product.id : newProduct.id);
+            }
             if(response.ok){
                 const result = await response.json();
                 console.log(result);
@@ -99,29 +104,25 @@ export default function admin({ product }: { product: Product}) {
             else{
                 console.log('failed to add product:', response.status);
             }
-            if (selectedFile) {
-                const formData = new FormData();
-                console.log('Img:', selectedFile);
-                formData.append('image', selectedFile);
-                await sendImg(formData, newProduct.id ? product.id : newProduct.id);
-            }
         } catch (err) {
             console.error('error:', err);
         }
     }
 
-    const sendImg = async(newImg:FormData,id:string) => {
-        url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/upload_image?product_id=${id}`;
-        const request:FormData = newImg;
-        console.log('request:', request.get('image'));
+    const sendImg = async (newImg: FormData, id: string) => {
+        const url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/upload_image?product_id=${id}`;
+        console.log('url:', url);
+        for (let pair of newImg.entries()) {
+            console.log(pair[0] + ', ' + pair[1]);
+        }
         try {
             const response = await fetch(url, {
                 method: 'PATCH',
-                body: request,
+                body: newImg,
             });
             if (response.ok) {
                 const result = await response.json();
-                alert('ProductImg added successfully');
+                alert(result.message);
                 console.log(result);
                 return;
             } else {
@@ -130,7 +131,7 @@ export default function admin({ product }: { product: Product}) {
         } catch (err) {
             console.error('Error:', err);
         }
-    }
+    };
 
     const Delete = async() => {
         const confirmed = confirm('Are you sure to delete this product?');
