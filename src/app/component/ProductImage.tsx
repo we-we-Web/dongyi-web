@@ -23,7 +23,7 @@ function ProductImage({id, name, isIndex,index}: {id: string, name: string, isIn
             }
         };
         fetchData();
-    }, []);
+    }, [id]);
     console.log(id,src);
     return (
         <div>
