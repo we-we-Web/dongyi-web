@@ -7,7 +7,7 @@ import '../../globals.css';
 export default function admin({ product }: { product: Product}) {
     const [onEdit, setOnEdit] = useState(false);
     const [newProduct, setNewProduct] = useState<Product>(product);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File>();
     const [size, setSize] = useState<{ [key: string]: number }>({});
     const sizeOrder = ['S', 'M', 'L', 'XL'];
     const edit = () => {
@@ -60,6 +60,7 @@ export default function admin({ product }: { product: Product}) {
         save('size', size);
         // console.log(size);
     }
+
     let url = '', method = '';
     if(product.id ==='-1'){
         url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/`;
@@ -81,47 +82,14 @@ export default function admin({ product }: { product: Product}) {
             discount: Number(newProduct.discount),
             image_url: '',
         }
-        // const newImg = newProduct.image as unknown as File;
         console.log("request : ",request);
         try {
-            // const response = await fetch(url, {
-            //     method: method,
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //         // 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 OPR/114.0.0.0'
-            //     },
-            //     body: JSON.stringify(request),
-            // });
-            // if(response.ok){
-            //     const result = await response.json();
-            //     console.log(result);
-            //     return;
-            // }
-            // else{
-            //     console.log('failed to add product:', response.status);
-            // }
-        } catch (err) {
-            console.error('error:', err);
-        }
-        if(method === 'POST'){
-            const formData = new FormData();
-            if (selectedFile) {
-                formData.append('image', selectedFile);
-            }
-            console.log('formData:', formData);
-            await sendImg(formData, newProduct.id);
-        }
-    }
-    const sendImg = async(newImg:FormData,id:string) => {
-        url = `https://dongyi-api.hnd1.zeabur.app/api/product/upload_image?product_id=${id}`;
-        // const request = newImg;
-        try {
             const response = await fetch(url, {
-                method: 'PATCH',
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: newImg,
+                body: JSON.stringify(request),
             });
             if(response.ok){
                 const result = await response.json();
@@ -131,8 +99,36 @@ export default function admin({ product }: { product: Product}) {
             else{
                 console.log('failed to add product:', response.status);
             }
+            if (selectedFile) {
+                const formData = new FormData();
+                console.log('Img:', selectedFile);
+                formData.append('image', selectedFile);
+                await sendImg(formData, newProduct.id ? product.id : newProduct.id);
+            }
         } catch (err) {
             console.error('error:', err);
+        }
+    }
+
+    const sendImg = async(newImg:FormData,id:string) => {
+        url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/upload_image?product_id=${id}`;
+        const request:FormData = newImg;
+        console.log('request:', request.get('image'));
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                body: request,
+            });
+            if (response.ok) {
+                const result = await response.json();
+                alert('ProductImg added successfully');
+                console.log(result);
+                return;
+            } else {
+                console.log('Failed to upload image:', response.status);
+            }
+        } catch (err) {
+            console.error('Error:', err);
         }
     }
 
