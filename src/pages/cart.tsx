@@ -14,7 +14,7 @@ import '../globals.css';
 export default function CartPage() {
     const router = useRouter();
 
-    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const [cartItems, setCartItems] = useState<CartItem[] | null>(null);
     const [cartViewItems, setCartViewItems] = useState<CartViewItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [email, setEmail] = useState('');

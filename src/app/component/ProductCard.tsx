@@ -2,30 +2,6 @@ import { Product } from "../model/product";
 import { useRouter } from 'next/router';
 import ProductImage from "./ProductImage";
 
-const getStarRating = (rating: number) => {
-    const filledStars = Math.floor(rating);
-    const halfStar = rating - filledStars >= 0.5 ? 1 : 0;
-    const emptyStars = 5 - filledStars - halfStar;
-
-    return (
-        <div className="flex items-center">
-            {[...Array(filledStars)].map((_, index) => (
-                <span key={`filled-${index}`} className="text-yellow-400 text-lg">
-                    ★
-                </span>
-            ))}
-            {halfStar === 1 && (
-                <span className="text-yellow-400 text-lg">☆</span>
-            )}
-            {[...Array(emptyStars)].map((_, index) => (
-                <span key={`empty-${index}`} className="text-gray-300 text-lg">
-                    ☆
-                </span>
-            ))}
-        </div>
-    );
-};
-
 export default function ProductCard({ product }: { product: Product}) {
     const router = useRouter();
     const handleNavigate = (id: string) => {

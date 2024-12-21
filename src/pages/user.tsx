@@ -94,7 +94,6 @@ function User() {
         <>
             <NavigationBar />
             <div className="mt-28 px-6 max-w-4xl mx-auto">
-                {/* 使用者資訊區 */}
                 <div className="bg-white shadow-md rounded-lg p-6 mb-8">
                     <h1 className="text-2xl font-bold text-gray-800">Hello, {user.name}</h1>
                     <p className="text-gray-600">Email: {user.id}</p>
@@ -106,7 +105,6 @@ function User() {
                     </p>
                 </div>
 
-                {/* 訂單列表 */}
                 <div className="bg-white shadow-md rounded-lg p-6">
                     <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Orders</h2>
                     {user.orders && user.orders.length > 0 ? (
@@ -130,7 +128,6 @@ function User() {
                     )}
                 </div>
 
-                {/* 登出按鈕 */}
                 <div className="text-right mt-6">
                     <LogoutButton />
                 </div>
