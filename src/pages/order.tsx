@@ -1,6 +1,3 @@
-'use client'
-
-import '../globals.css';
 import { jwtDecode } from 'jwt-decode';
 import { UserProfile } from '../app/model/userProfile';
 import { useEffect, useState } from 'react';
@@ -9,7 +6,7 @@ import Loading from '../app/component/Loading';
 import NavigationBar from '../app/component/NavigationBar';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-
+import '../globals.css';
 
 interface OrderItem {
     id: string

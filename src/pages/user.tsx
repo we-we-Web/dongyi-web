@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import Loading from '../app/component/Loading';
 import Link from 'next/link';
 import NavigationBar from '../app/component/NavigationBar';
+import '../globals.css';
 
 interface User {
     id: string,
