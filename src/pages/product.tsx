@@ -32,13 +32,6 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
 
 export default function ProductContent({ product }: { product: Product }) {
     const [email, setEmail] = useState('');
-    const [isLoginOpen, setLoginOpen] = useState(false);
-    const [addingBtnText, setAddingBtnText] = useState('Add to Cart');
-    const [selectedSpec, setSelectedSpec] = useState<ProductSpec | null>(null);
-    const [quantity, setQuantity] = useState(1);
-    useEffect(() => {
-        document.body.style.overflow = isLoginOpen ? 'hidden' : 'auto';
-    }, [isLoginOpen]);
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -51,30 +44,46 @@ export default function ProductContent({ product }: { product: Product }) {
                 localStorage.removeItem('access-token');
             }
         }
-        if (product && product.size.length > 0) {
-            setSelectedSpec(product.size[0]);
-        }
     }, []);
-
-    useEffect(() => {
-        if (product?.name) {
-            document.title = product.name;
-        }
-    }, [product]);
     
-    const addtoCart = async(id: string) => {
-        if (id === '') {
-            setLoginOpen(true);
+    const [selectedSize, setSelectedSize] = useState<string | null>(null);
+    const [quantity, setQuantity] = useState<number>(1);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+    const handleSizeSelect = (size: string) => {
+        setSelectedSize(size);
+    };
+
+    const handleQuantityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = parseInt(event.target.value, 10);
+        if (value > 0 && selectedSize && value <= product.size[selectedSize]) {
+            setQuantity(value);
         }
-        const url = `https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd`;
+    };
+
+    const handleQuantityIncrease = () => {
+        setQuantity((prev) => prev + 1);
+    };
+
+    const handleQuantityDecrease = () => {
+        setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+    };
+
+    const handleAddToCart = async () => {
+        if (!selectedSize) {
+            setToast({ message: "Please select a size.", type: "error" });
+            setTimeout(() => setToast(null), 3000);
+            return;
+        }
+        const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
         const request = {
-            id: id,
-            product: `${product?.id}`,
-            size: selectedSpec?.size,
+            id: email,
+            product: `${product.id}`,
+            size: selectedSize,
             delta: quantity,
-            remaining: selectedSpec?.remaining,
-        }
-        console.log('request body:', request);
+            remaining: product.size[selectedSize],
+        };
+
         try {
             const response = await fetch(url, {
                 method: 'PATCH',
@@ -82,104 +91,110 @@ export default function ProductContent({ product }: { product: Product }) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(request),
-            });
+            })
             if (response.ok) {
-                const result = await response.json();
-                console.log(result);
-                setAddingBtnText('Successfully!');
-                setTimeout(() => {
-                    setAddingBtnText('Add to Cart');
-                }, 600);
-                return ;
-            } else if (response.status === 404) {
-                console.log('cart not found');
+                setToast({ message: "Added to cart successfully!", type: "success" });
             } else {
-                console.log('failed to upd cart:', response.status);
+                setToast({ message: `Occur an error when add to cart: ${response.status}`, type: "error" });
             }
-        } catch (err) {
-            console.error('error:', err);
+        } catch (error) {
+            setToast({ message: "Failed to add to cart.", type: "error" });
         }
-        setAddingBtnText('Failed...');
-        setTimeout(() => {
-            setAddingBtnText('Add to Cart');
-        }, 600);
+
+        setTimeout(() => setToast(null), 3000);
     };
 
-    
-    
-    const add = () => {
-        // if (quantity >= product.size.remaining) return ;
-        setQuantity(quantity+1);
-    }
-    const minus = () => {
-        if (quantity <= 1) return ;
-        setQuantity(quantity-1);
-    }
-    const sizeEntries = product.size ? Object.entries(product.size).filter(([key, value]) => Number(value) > 0) : [];
-    const [selectedSize, setSelectedSize] = useState<string | null>(null);
-
-    const handleSizeClick = (size: string, remaining: number) => {
-        setSelectedSpec({ size: size, remaining: remaining });
-        setQuantity(1);
-    };
-    if (!product) return <Loading/>;
     return (
-        <div className="flex h-[100%] w-[100%] pt-[10vh]">
+        <div className="flex flex-col items-center bg-gray-50 min-h-screen py-10">
             <NavigationBar />
-            <div className='flex m-8'>
-                <ProductImage id={product.id} name={product.name} isIndex={false} />
-                <div className="flex-col ml-10 space-y-6">
-                    <h1 className="text-2xl font-bold">{product.name}</h1>
-                    <p className="text-gray-600 text-sm">{product.description}</p>
-                    <div className="text-2xl font-bold text-red-600">NT${product.price}</div>
-                    <div className="flex flex-col mt-16">
-                    <div>
-                            <h4>
-                                尺寸：{selectedSize ? <span>{selectedSize}</span> : '未選擇'}
-                            </h4>
-                            <div className="flex">
-                                {sizeEntries.length > 0 ? (
-                                    sizeEntries.map(([size, quantity]) => (
-                                        <button 
-                                            key={size} 
-                                            className={`w-10 h-10 border-2 rounded-lg flex items-center justify-center m-1 cursor-pointer
-                                                        ${selectedSize === size ? 'border-[#9F79EE] text-[#9F79EE]':'border-gray-400 text-gray-400 hover:border-[#9F79EE] hover:text-[#9F79EE]'}`}
-                                            onClick={() => setSelectedSize(size)}
-                                        >
-                                            {size}
-                                        </button>
-                                    ))
-                                ) : (
-                                    <span className="text-gray-500">目前無尺寸可選擇</span>
-                                )}
-                            </div>
+            <div className="bg-white shadow-lg rounded-lg p-8 max-w-4xl w-full mt-20">
+                <div className="flex flex-col md:flex-row md:space-x-8">
+                    <div className="flex-1 rounded-lg border border-slate-300">
+                        <ProductImage id={product.id} name={product.name} isIndex={false} />
                     </div>
-                        <div className="flex items-center justify-center w-36 m-0">
-                            <button onClick={minus} className="flex items-center justify-center w-8 h-8 
-                                                             hover:text-[#9F79EE] text-[2em]">
-                                -
-                            </button>
-                            <span className="w-20 text-center">{quantity}</span>
-                            <button onClick={add} className="flex items-center justify-center 
-                                                            w-8 h-8 bg-gray-200 text-[2em]
-                                                            ${sizeQuantity.quantity === selectedSize?.quantity ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-400'}"
-                            disabled={quantity === selectedSpec?.remaining}>
-                                +
-                            </button>
+
+                    <div className="flex-1 flex flex-col space-y-4">
+                        <h1 className="text-2xl font-bold text-gray-800">
+                            {product.name}
+                        </h1>
+                        <p className="text-gray-600">{product.description}</p>
+                        <p className="text-lg font-semibold text-purple-600">
+                            ${product.price}
+                        </p>
+
+                        <div>
+                            <h2 className="text-gray-700 font-semibold mb-2">Size:</h2>
+                            <div className="flex space-x-2">
+                                {Object.keys(product.size).map((size) => (
+                                    <button
+                                        key={size}
+                                        onClick={() => handleSizeSelect(size)}
+                                        className={`px-4 py-2 rounded-lg border ${
+                                            selectedSize === size
+                                                ? "bg-purple-600 text-white"
+                                                : "bg-gray-200 text-gray-800"
+                                        } hover:bg-purple-500 hover:text-white`}
+                                    >
+                                        {size}
+                                    </button>
+                                ))}
+                            </div>
+                            {selectedSize && (
+                                <p className="text-sm text-green-600 mt-2">
+                                    Selected size: {selectedSize} (Stock: {product.size[selectedSize]})
+                                </p>
+                            )}
                         </div>
+
+                        <div className="flex items-center space-x-4">
+                            <h2 className="text-gray-700 font-semibold">Quantity:</h2>
+                            <div className="flex items-center space-x-2">
+                                <button
+                                    onClick={handleQuantityDecrease}
+                                    className={`px-3 py-2 rounded ${
+                                        quantity <= 1
+                                            ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-30"
+                                            : "bg-gray-200 hover:bg-violet-600 hover:text-white"
+                                    }`}
+                                >
+                                    -
+                                </button>
+                                <input
+                                    type="number"
+                                    value={quantity}
+                                    onChange={handleQuantityChange}
+                                    className="w-16 text-center border border-gray-300 rounded-lg"
+                                />
+                                <button
+                                    onClick={handleQuantityIncrease}
+                                    className={`px-3 py-2 rounded ${
+                                        selectedSize && quantity >= product.size[selectedSize]
+                                            ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-30"
+                                            : "bg-gray-200 hover:bg-violet-600 hover:text-white"
+                                    }`}
+                                >
+                                    +
+                                </button>
+                            </div>
+                        </div>
+
                         <button 
-                            className="bg-[#9F79EE] w-36 h-[2em] text-white mt-0 hover:opacity-60" 
-                            onClick={() => addtoCart(email)}>
-                            {addingBtnText}
+                            onClick={() => handleAddToCart()}
+                            className="bg-violet-500 text-white px-6 py-3 rounded-lg shadow hover:bg-violet-700">
+                            Add to Cart
                         </button>
                     </div>
                 </div>
             </div>
-            {isLoginOpen &&
-                <LoginPopup
-                    onClose={() => setLoginOpen(false)} 
-                />
-            }
+            {toast && (
+                <div
+                    className={`fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white ${
+                        toast.type === "success" ? "bg-green-500" : "bg-red-500"
+                    }`}
+                >
+                    {toast.message}
+                </div>
+            )}
         </div>
     );
 }
