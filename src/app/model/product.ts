@@ -1,15 +1,14 @@
-interface Product {
+export interface Product {
     id: string
     name: string
     price: number
-    color: string
-    size: string
-    remain_amount: number
+    size: ProductSpec
     image?: string
-    description?: string
+    description: string
     discount?: number
     categories?: string
-    rating?: number
 }
 
-export default Product;
+export interface ProductSpec {
+    [key: string]: number
+}

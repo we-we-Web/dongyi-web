@@ -3,6 +3,7 @@ import LoginPopup from "./LoginPopup";
 import { UserProfile } from "../model/userProfile";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/router";
+import { TiShoppingCart } from "react-icons/ti";
 
 function CartButton() {
     const router = useRouter();
@@ -38,10 +39,9 @@ function CartButton() {
         <div className="absolute top-6 right-20">
             <button
                 onClick={handleLoginClick}
-                className="flex items-center p-1.5 rounded-full hover:opacity-70"
-                style={{ border: '2px solid #9F79EE', color: '#9F79EE' }}
+                className="flex items-center p-1 rounded-full hover:opacity-70 text-white"
             >
-                購物車
+                <TiShoppingCart size={35} />
             </button>
             {isLoginOpen &&
                 <LoginPopup
