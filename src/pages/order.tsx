@@ -1,26 +1,12 @@
 import { jwtDecode } from 'jwt-decode';
 import { UserProfile } from '../app/model/userProfile';
 import { useEffect, useState } from 'react';
-import { ProductSpec } from '../app/model/product';
 import Loading from '../app/component/Loading';
 import NavigationBar from '../app/component/NavigationBar';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { OrderItem, OrderViewItem } from '../app/model/orderItem';
 import '../globals.css';
-
-interface OrderItem {
-    id: string
-    price: number
-    spec: ProductSpec
-};
-
-interface OrderViewItem {
-    product: string
-    name: string
-    price: number
-    total: number
-    spec: ProductSpec
-}
 
 export default function OrderPage() {
     const router = useRouter();

@@ -1,16 +1,11 @@
 import { Product } from "../model/product";
-import { useRouter } from 'next/router';
 import ProductImage from "./ProductImage";
+import Link from "next/link";
 
 export default function ProductCard({ product }: { product: Product}) {
-    const router = useRouter();
-    const handleNavigate = (id: string) => {
-        router.push(`/product/?id=${id}`);
-    };
-
     return (
-        <div
-            onClick={() => handleNavigate(`${product.id}`)}
+        <Link 
+            href={`/product?id=${product.id}`}
             className="flex flex-col bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 border border-slate-300 min-h-[300px] h-full cursor-pointer"
         >
             <ProductImage id={product.id} name={product.name} isIndex={true} index={0}/>
@@ -35,6 +30,6 @@ export default function ProductCard({ product }: { product: Product}) {
                     </div>
                 )}
             </div>
-        </div>
+        </Link>
     );
 };

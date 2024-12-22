@@ -7,16 +7,11 @@ import Loading from '../app/component/Loading';
 import Link from 'next/link';
 import NavigationBar from '../app/component/NavigationBar';
 import '../globals.css';
+import { User } from '../app/model/userModel';
 
-interface User {
-    id: string,
-    name: string,
-    orders: string[],
-    created_at: string,
-    updated_at: string,
-};
 
-function User() {
+
+function UserPage() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
 
@@ -137,4 +132,4 @@ function User() {
     );
 };
 
-export default User;
+export default UserPage;
