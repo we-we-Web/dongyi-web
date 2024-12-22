@@ -8,6 +8,7 @@ import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
 import ProductImage from '../app/component/ProductImage';
 import '../globals.css';
+import LoginPopup from '../app/component/LoginPopup';
 
 export const getServerSideProps: GetServerSideProps = async(context) => {
     const ProductId = context.query!;
@@ -33,6 +34,7 @@ export default function ProductContent({ product }: { product: Product }) {
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
     const [quantity, setQuantity] = useState<number>(1);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+    const [isLoginOpen, setIsLoginOpen] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -71,6 +73,10 @@ export default function ProductContent({ product }: { product: Product }) {
             setToast({ message: "Please select a size.", type: "error" });
             setTimeout(() => setToast(null), 3000);
             return;
+        }
+        if (email === '') {
+            setIsLoginOpen(true);
+            return ;
         }
         const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
         const request = {
@@ -193,6 +199,11 @@ export default function ProductContent({ product }: { product: Product }) {
                     {toast.message}
                 </div>
             )}
+            {isLoginOpen &&
+                <LoginPopup
+                    onClose={() => setIsLoginOpen(false)} 
+                />
+            }
         </div>
     );
 }
