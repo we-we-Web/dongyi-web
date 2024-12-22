@@ -18,7 +18,7 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
         let response = await fetch(url);
         if (response.ok) {
             const product: Product = await response.json();
-            let recommendedProducts: Product[] = [];
+            const recommendedProducts: Product[] = [];
             console.log(`Get product ${ProductId.id} successfully`);
             for(let i = 1; i <= 2; i++) { 
                 url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${i}`;
