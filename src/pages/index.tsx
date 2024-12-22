@@ -40,6 +40,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
             const result: AdsItem[] = await response.json();
             const data = result.map(item => {
                 return {
+                    id: item.id,
                     img: item.img,
                     target: item.target,
                 };
@@ -89,7 +90,9 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
                 <Slider {...sliderSettings} >
                     {
                         ads && ads.length > 0 && ads.map(item => (
-                            <Link href={item.target} target={`${item.target === '/' ? '' : '_blank'}`}>
+                            <Link 
+                                key={item.id}
+                                href={item.target} target={`${item.target === '/' ? '' : '_blank'}`}>
                                 <div className="h-[500px] flex items-center justify-center rounded-xl">
                                     <Image
                                         src={item.img}
