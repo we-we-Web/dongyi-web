@@ -6,82 +6,70 @@ import { useEffect, useState } from 'react';
 import Slider from "react-slick";
 import Loading from '../app/component/Loading';
 import Image from 'next/image';
+import Link from 'next/link';
+import { sliderSettings } from '../app/model/sliderSettings';
+import { AdsItem } from '../app/model/adsItem';
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import '../globals.css';
 
+
 export const getServerSideProps: GetServerSideProps = async () => {
-    try {
+    const fetchProducts = async() => {
         const url = 'https://dongyi-api.hnd1.zeabur.app/product/api/product';
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const data: Product[] = await response.json();
+            return data;
+        } catch (err) {
+            console.error("Error fetching data:", err);
+            return [];
         }
-        const data: Product[] = await response.json();
-        console.log('hello, ', data);
-        return { props: { data } };
-    } catch (err) {
-        console.error("Error fetching data:", err);
-        return { props: { data: [] } };
     }
+    const fetchAds = async() => {
+        const url = 'https://dongyi-api.hnd1.zeabur.app/ads/api/ads-getall';
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const result: AdsItem[] = await response.json();
+            const data = result.map(item => {
+                return {
+                    img: item.img,
+                    target: item.target,
+                };
+            })
+            return data;
+        } catch (err) {
+            console.log(err);
+            return [];
+        }
+    }
+    const products = await fetchProducts();
+    const ads = await fetchAds();
+    return { props: {products, ads} };
 };
 
-const CustomPrevArrow = ({ onClick }: { onClick?: () => void }) => {
-    return (
-        <button
-            className="opacity-50 absolute left-[-30px] top-1/2 
-                        transform -translate-y-1/2 z-10 bg-white text-gray-800 
-                        p-3 rounded-full shadow-md border border-gray-300 
-                        hover:bg-gray-100 hover:scale-110 transition-transform duration-300 ease-in-out"
-            onClick={onClick}
-        >
-            ←
-        </button>
-    );
-};
-
-const CustomNextArrow = ({ onClick }: { onClick?: () => void }) => {
-    return (
-        <button
-            className="opacity-50 absolute right-[-30px] top-1/2 
-                        transform -translate-y-1/2 z-10 bg-white text-gray-800 
-                        p-3 rounded-full shadow-md border border-gray-300 
-                        hover:bg-gray-100 hover:scale-110 transition-transform duration-300 ease-in-out"
-            onClick={onClick}
-        >
-            →
-        </button>
-    );
-};
-
-const sliderSettings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 2000,
-    prevArrow: <CustomPrevArrow />,
-    nextArrow: <CustomNextArrow />,
-};
-
-function Home({ data }: { data: Product[] }) {
+function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
     const [isLoading, setIsLoading] = useState(true);
     const [categories, setCategories] = useState<string[]>([]);
     const [groupedProducts, setGroupedProducts] = useState<Record<string, Product[]>>({});
 
     useEffect(() => {
         const uniqueCategories = Array.from(
-            new Set(data.map((product) => product.categories)
+            new Set(products.map((product) => product.categories)
                     .filter(Boolean)
                     .filter((category): category is string => category !== undefined))
         );
         setCategories(uniqueCategories);
 
         const grouped = uniqueCategories.reduce((acc, category) => {
-            acc[category] = data.filter((product) => product.categories === category);
+            acc[category] = products.filter((product) => product.categories === category);
             return acc;
         }, {} as Record<string, Product[]>);
 
@@ -90,7 +78,7 @@ function Home({ data }: { data: Product[] }) {
             setIsLoading(false);
         }, 600);
         
-    }, [data]);
+    }, [products]);
 
     if (isLoading) return <Loading />
 
@@ -99,38 +87,22 @@ function Home({ data }: { data: Product[] }) {
             <NavigationBar />
             <div className="mx-auto my-6 mt-32 max-w-screen-2xl shadow-2xl rounded-xl">
                 <Slider {...sliderSettings} >
-                    <div className="h-[500px] flex items-center justify-center rounded-xl">
-                        <Image
-                            src="https://i.imgur.com/7LxsGtY.jpeg"
-                            alt="廣告 1"
-                            width={1500}
-                            height={300}
-                            loading='lazy'
-                            className="object-cover w-full h-full rounded-xl"
-                        />
-                    </div>
-
-                    <div className="h-[500px] flex items-center justify-center rounded-xl">
-                        <Image
-                            src="https://i.imgur.com/FhSWoZt.png"
-                            alt="廣告 2"
-                            width={1500}
-                            height={300}
-                            loading='lazy'
-                            className="object-cover w-full h-full rounded-xl"
-                        />
-                    </div>
-
-                    <div className="h-[500px] flex items-center justify-center rounded-xl">
-                        <Image
-                            src="https://i.imgur.com/V4j3d7Y.jpeg"
-                            alt="廣告 3"
-                            width={1500}
-                            height={300}
-                            loading='lazy'
-                            className="object-cover w-full h-full rounded-xl"
-                        />
-                    </div>
+                    {
+                        ads && ads.length > 0 && ads.map(item => (
+                            <Link href={item.target} target={`${item.target === '/' ? '' : '_blank'}`}>
+                                <div className="h-[500px] flex items-center justify-center rounded-xl">
+                                    <Image
+                                        src={item.img}
+                                        alt="Ads"
+                                        width={1500}
+                                        height={300}
+                                        loading='lazy'
+                                        className="object-cover w-full h-full rounded-xl"
+                                    />
+                                </div>
+                            </Link>
+                        ))
+                    }
                 </Slider>
             </div>
             <div className="container mx-auto px-4 py-8 mt-16">

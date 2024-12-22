@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { useRouter } from 'next/router';
 
-const LogoutButton: React.FC = () => {
+function LogoutButton() {
     const router = useRouter();
 
     const handleLogout = () => {
