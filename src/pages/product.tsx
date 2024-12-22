@@ -4,11 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { Product } from '../app/model/product';
 import ProductCard from '../app/component/ProductCard';
 import NavigationBar from '../app/component/NavigationBar';
-import '../globals.css';
 import { GetServerSideProps } from 'next';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
 import ProductImage from '../app/component/ProductImage';
+import '../globals.css';
+import LoginPopup from '../app/component/LoginPopup';
 
 export const getServerSideProps: GetServerSideProps = async(context) => {
     const ProductId = context.query!;
@@ -42,6 +43,11 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
 
 export default function ProductContent({ product, recommendedProducts }: { product: Product, recommendedProducts: Product[] }) {
     const [email, setEmail] = useState('');
+    const [selectedSize, setSelectedSize] = useState<string | null>(null);
+    const [quantity, setQuantity] = useState<number>(1);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+    const [isLoginOpen, setIsLoginOpen] = useState(false);
+
     useEffect(() => {
         const token = localStorage.getItem('access-token');
         if (token) {
@@ -54,10 +60,6 @@ export default function ProductContent({ product, recommendedProducts }: { produ
             }
         }
     }, []);
-    
-    const [selectedSize, setSelectedSize] = useState<string | null>(null);
-    const [quantity, setQuantity] = useState<number>(1);
-    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     const handleSizeSelect = (size: string) => {
         setSelectedSize(size);
@@ -84,6 +86,10 @@ export default function ProductContent({ product, recommendedProducts }: { produ
             setTimeout(() => setToast(null), 3000);
             return;
         }
+        if (email === '') {
+            setIsLoginOpen(true);
+            return ;
+        }
         const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
         const request = {
             id: email,
@@ -107,6 +113,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                 setToast({ message: `Occur an error when add to cart: ${response.status}`, type: "error" });
             }
         } catch (error) {
+            console.log(error);
             setToast({ message: "Failed to add to cart.", type: "error" });
         }
 
@@ -215,6 +222,11 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                     {toast.message}
                 </div>
             )}
+            {isLoginOpen &&
+                <LoginPopup
+                    onClose={() => setIsLoginOpen(false)} 
+                />
+            }
         </div>
     );
 }

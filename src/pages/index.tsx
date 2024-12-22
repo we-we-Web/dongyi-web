@@ -2,11 +2,15 @@ import { GetServerSideProps } from 'next';
 import ProductCard from '../app/component/ProductCard';
 import { Product } from '../app/model/product';
 import NavigationBar from '../app/component/NavigationBar';
-import '../globals.css';
 import { useEffect, useState } from 'react';
+import Slider from "react-slick";
+
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import '../globals.css';
+import Image from 'next/image';
 
 export const getServerSideProps: GetServerSideProps = async () => {
-    console.log('hello world');
     try {
         const url = 'https://dongyi-api.hnd1.zeabur.app/product/api/product';
         const response = await fetch(url);
@@ -22,70 +26,129 @@ export const getServerSideProps: GetServerSideProps = async () => {
     }
 };
 
+const CustomPrevArrow = ({ onClick }: { onClick?: () => void }) => {
+    return (
+        <button
+            className="absolute left-[-40px] top-1/2 transform -translate-y-1/2 z-10 bg-gray-800 text-white p-2 rounded-full shadow hover:bg-gray-700"
+            onClick={onClick}
+        >
+            ←
+        </button>
+    );
+};
+
+const CustomNextArrow = ({ onClick }: { onClick?: () => void }) => {
+    return (
+        <button
+            className="absolute right-[-40px] top-1/2 transform -translate-y-1/2 z-10 bg-gray-800 text-white p-2 rounded-full shadow hover:bg-gray-700"
+            onClick={onClick}
+        >
+            →
+        </button>
+    );
+};
+
+const sliderSettings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 2000,
+    prevArrow: <CustomPrevArrow />,
+    nextArrow: <CustomNextArrow />,
+};
+
 function Home({ data }: { data: Product[] }) {
     const [categories, setCategories] = useState<string[]>([]);
-    const [selectedCategory, setSelectedCategory] = useState<string>('');
-    const [filteredData, setFilteredData] = useState<Product[]>([]);
+    const [groupedProducts, setGroupedProducts] = useState<Record<string, Product[]>>({});
 
     useEffect(() => {
-        setFilteredData(data);
-        const uniqueCategories: string[] = Array.from(
-            new Set(data.map((product) => 
-                product.categories).filter((category): category is string => category !== undefined)
-            )
+        const uniqueCategories = Array.from(
+            new Set(data.map((product) => product.categories)
+                    .filter(Boolean)
+                    .filter((category): category is string => category !== undefined))
         );
         setCategories(uniqueCategories);
-    }, []);
 
-    const handleCategorySearch = () => {
-        if (selectedCategory === '') {
-            setFilteredData(data);
-        } else {
-            const filtered = data.filter(
-                (product) => product.categories === selectedCategory
-            );
-            setFilteredData(filtered);
-        }
-    };
+        const grouped = uniqueCategories.reduce((acc, category) => {
+            acc[category] = data.filter((product) => product.categories === category);
+            return acc;
+        }, {} as Record<string, Product[]>);
+
+        setGroupedProducts(grouped);
+    }, [data]);
 
     return (
         <>
             <NavigationBar />
-            <div className="p-6 relative mt-16">
-                <h1 className="text-2xl font-bold mb-6">商品列表</h1>
+            <div className="mx-auto my-6 mt-32 max-w-screen-2xl">
+                <Slider {...sliderSettings}>
+                    <div className="h-[500px] flex items-center justify-center bg-gray-200">
+                        <Image
+                            src="https://i.imgur.com/7LxsGtY.jpeg"
+                            alt="廣告 1"
+                            width={1200}
+                            height={300}
+                            className="object-cover w-full h-full"
+                            priority
+                        />
+                    </div>
 
-                <div className="mb-4 flex items-center">
-                    <label htmlFor="categorySelect" className="mr-2 font-semibold">選擇類別:</label>
-                    <select
-                        id="categorySelect"
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="border border-gray-300 rounded p-2 w-[200px]"
-                    >
-                        <option value="">全部商品</option>
-                        {categories.map((category, index) => (
-                            <option key={index} value={category}>
-                                {category}
-                            </option>
-                        ))}
-                    </select>
-                    <button
-                        onClick={handleCategorySearch}
-                        className="ml-2 bg-blue-500 text-white px-4 py-2 rounded hover:opacity-80"
-                    >
-                        搜尋
-                    </button>
-                </div>
+                    <div className="h-[500px] flex items-center justify-center bg-gray-200">
+                        <Image
+                            src="https://i.imgur.com/FhSWoZt.png"
+                            alt="廣告 2"
+                            width={1200}
+                            height={300}
+                            className="object-cover w-full h-full"
+                        />
+                    </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                    {filteredData.map((product, index) => (
-                        <ProductCard product={product} key={index} />
-                    ))}
-                </div>
+                    <div className="h-[500px] flex items-center justify-center bg-gray-200">
+                        <Image
+                            src="https://i.imgur.com/V4j3d7Y.jpeg"
+                            alt="廣告 3"
+                            width={1200}
+                            height={300}
+                            className="object-cover w-full h-full"
+                        />
+                    </div>
+                </Slider>
+            </div>
+            <div className="container mx-auto px-4 py-8 mt-16">
+                <h1 className="text-4xl font-bold text-center mb-12">商品列表</h1>
+
+                {categories.map((category) => (
+                    <div key={category} className="mb-12">
+                        <h2 className="text-2xl font-semibold mb-6 border-b-2 border-gray-300 pb-2">
+                            {category}
+                        </h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                            {groupedProducts[category]?.map((product, index) => (
+                                <ProductCard product={product} key={index} />
+                            ))}
+                        </div>
+                    </div>
+                ))}
+
+                {groupedProducts[""]?.length > 0 && (
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-semibold mb-6 border-b-2 border-gray-300 pb-2">
+                            未分類商品
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {groupedProducts[""]?.map((product, index) => (
+                                <ProductCard product={product} key={index} />
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </>
     );
-};
+}
 
 
 export default Home;

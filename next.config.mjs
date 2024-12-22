@@ -6,6 +6,7 @@ const nextConfig = {
         'dongyi-api.hnd1.zeabur.app',
         'dongyishoppingplatform.s3.amazonaws.com',
         'lh3.googleusercontent.com',
+        'i.imgur.com',
       ],
     },
   };

@@ -1,4 +1,5 @@
-import {Product} from "../model/product";
+
+import { Product } from "../model/product";
 import { useRouter } from 'next/router';
 import ProductImage from "./ProductImage";
 
