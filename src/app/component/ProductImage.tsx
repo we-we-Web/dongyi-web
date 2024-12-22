@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { useEffect } from "react";
-import { use, useState } from "react";
-
+import { useState } from "react";
+import { LazyLoadImage } from 'react-lazy-load-image-component';
+import 'react-lazy-load-image-component/src/effects/blur.css';
 
 function ProductImage({id, name, isIndex,index}: {id: string, name: string, isIndex: boolean,index:number}) {
     const [src, setSrc] = useState<string[]>([]);
@@ -15,30 +15,24 @@ function ProductImage({id, name, isIndex,index}: {id: string, name: string, isIn
                     setSrc(data.image_urls);
                 } else {
                     console.error('failed to fetch:', response.status);
-                    setSrc(['/default.png']);
+                    setSrc(['https://media.tenor.com/IfbOs_yh89AAAAAM/loading-buffering.gif']);
                 }
             } catch (error) {
                 console.error('error:', error);
-                setSrc(['/default.png']);
+                setSrc(['https://media.tenor.com/IfbOs_yh89AAAAAM/loading-buffering.gif']);
             }
         };
         fetchData();
     }, [id]);
-    console.log(id,src);
+    
     return (
-        <div>
-            {isIndex ? '' 
-            : (<Image
-                // key={index}
-                src={src ? src[1] : '/default.png'}
-                alt={name}
-                width={1200}
-                height={1200}
-                className={isIndex ? "w-full h-64 object-cover" : "w-auto h-[60vh] object-contain"}
-                onError={() => setSrc(['/default.png'])}
-            />) } 
-            
-        </div>
+        <LazyLoadImage
+            src={src && src.length > 1 ? src[1] : 'https://media.tenor.com/IfbOs_yh89AAAAAM/loading-buffering.gif'}
+            alt={name}
+            className={`object-cover w-full ${isIndex ? 'h-48' : 'h-[60vh'}`}
+            effect="blur"
+            onError={() => setSrc(['https://media.tenor.com/IfbOs_yh89AAAAAM/loading-buffering.gif'])}
+        />
     )
 }
 

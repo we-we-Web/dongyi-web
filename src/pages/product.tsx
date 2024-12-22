@@ -8,8 +8,8 @@ import { GetServerSideProps } from 'next';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
 import ProductImage from '../app/component/ProductImage';
-import '../globals.css';
 import LoginPopup from '../app/component/LoginPopup';
+import '../globals.css';
 
 export const getServerSideProps: GetServerSideProps = async(context) => {
     const ProductId = context.query!;
@@ -20,7 +20,7 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
             const product: Product = await response.json();
             let recommendedProducts: Product[] = [];
             console.log(`Get product ${ProductId.id} successfully`);
-            for(let i = 1; i <= 2; i++) { // 取得兩個推薦商品
+            for(let i = 1; i <= 2; i++) { 
                 url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${i}`;
                 response = await fetch(url);
                 if (response.ok) {
@@ -202,12 +202,12 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                     </div>
                 </div>
             </div>
-            <div className="bg-white shadow-lg rounded-lg p-8 max-w-4xl w-full mt-8">
+            <div className="bg-white shadow-lg rounded-lg p-12 max-w-4xl w-full mt-8">
                 <h1 className="text-2xl font-bold text-gray-800 text-center">推薦商品</h1>
-                <div className="flex flex-wrap -mx-4">
+                <div className="flex flex-wrap mx-4 mt-6">
                     {   
                         recommendedProducts && recommendedProducts.map((product) => (
-                            <div className='w-full md:w-1/2 px-4 mt-4' key={product.id}>
+                            <div className='w-full h-96 md:w-1/2 px-4 mt-4' key={product.id}>
                                 <ProductCard product={product} />
                             </div>
                     ))}
