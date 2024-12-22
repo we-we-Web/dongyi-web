@@ -13,7 +13,7 @@ export default function ProductCard({ product }: { product: Product}) {
             onClick={() => handleNavigate(`${product.id}`)}
             className="flex flex-col bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 border border-slate-300 min-h-[300px] h-full cursor-pointer"
         >
-            <ProductImage id={product.id} name={product.name} isIndex={true} />
+            <ProductImage id={product.id} name={product.name} isIndex={true} index={0}/>
             <div className="p-4 flex flex-col justify-between flex-grow">
                 <h2 className="text-lg font-bold">{product.name}</h2>
                 <p className="text-gray-500">{product.categories}</p>

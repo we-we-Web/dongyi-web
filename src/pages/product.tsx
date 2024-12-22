@@ -2,23 +2,35 @@
 
 import React, { useEffect, useState } from 'react';
 import { Product } from '../app/model/product';
+import ProductCard from '../app/component/ProductCard';
 import NavigationBar from '../app/component/NavigationBar';
 import { GetServerSideProps } from 'next';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
 import ProductImage from '../app/component/ProductImage';
-import '../globals.css';
 import LoginPopup from '../app/component/LoginPopup';
+import '../globals.css';
 
 export const getServerSideProps: GetServerSideProps = async(context) => {
     const ProductId = context.query!;
     try {
-        const url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${ProductId.id}`;
-        const response = await fetch(url);
+        let url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${ProductId.id}`;
+        let response = await fetch(url);
         if (response.ok) {
             const product: Product = await response.json();
+            let recommendedProducts: Product[] = [];
             console.log(`Get product ${ProductId.id} successfully`);
-            return { props: { product } };
+            for(let i = 1; i <= 2; i++) { 
+                url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${i}`;
+                response = await fetch(url);
+                if (response.ok) {
+                    recommendedProducts.push(await response.json());
+                    console.log(`Get recommendedProducts ${i} successfully`);
+                } else {
+                    console.error('failed to fetch:', response.status);
+                }
+            }
+            return { props: { product, recommendedProducts} };
         } else {
             console.error('failed to fetch:', response.status);
             return { props: {} };
@@ -29,7 +41,7 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
     }
 }
 
-export default function ProductContent({ product }: { product: Product }) {
+export default function ProductContent({ product, recommendedProducts }: { product: Product, recommendedProducts: Product[] }) {
     const [email, setEmail] = useState('');
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
     const [quantity, setQuantity] = useState<number>(1);
@@ -114,7 +126,7 @@ export default function ProductContent({ product }: { product: Product }) {
             <div className="bg-white shadow-lg rounded-lg p-8 max-w-4xl w-full mt-20">
                 <div className="flex flex-col md:flex-row md:space-x-8">
                     <div className="flex-1 rounded-lg border border-slate-300">
-                        <ProductImage id={product.id} name={product.name} isIndex={false} />
+                        <ProductImage id={product.id} name={product.name} isIndex={false} index={0}/>
                     </div>
 
                     <div className="flex-1 flex flex-col space-y-4">
@@ -188,6 +200,17 @@ export default function ProductContent({ product }: { product: Product }) {
                             Add to Cart
                         </button>
                     </div>
+                </div>
+            </div>
+            <div className="bg-white shadow-lg rounded-lg p-12 max-w-4xl w-full mt-8">
+                <h1 className="text-2xl font-bold text-gray-800 text-center">推薦商品</h1>
+                <div className="flex flex-wrap mx-4 mt-6">
+                    {   
+                        recommendedProducts && recommendedProducts.map((product) => (
+                            <div className='w-full h-96 md:w-1/2 px-4 mt-4' key={product.id}>
+                                <ProductCard product={product} />
+                            </div>
+                    ))}
                 </div>
             </div>
             {toast && (
