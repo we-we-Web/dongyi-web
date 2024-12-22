@@ -3,7 +3,7 @@ import { useState } from "react";
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 
-function ProductImage({id, name, isIndex,index}: {id: string, name: string, isIndex: boolean,index:number}) {
+function ProductImage({id, name, isIndex }: {id: string, name: string, isIndex: boolean,index:number}) {
     const [src, setSrc] = useState<string[]>([]);
     useEffect(() => {
         const url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/get_image?product_id=${id}`;
