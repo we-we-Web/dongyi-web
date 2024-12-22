@@ -4,11 +4,12 @@ import { Product } from '../app/model/product';
 import NavigationBar from '../app/component/NavigationBar';
 import { useEffect, useState } from 'react';
 import Slider from "react-slick";
+import Loading from '../app/component/Loading';
+import Image from 'next/image';
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import '../globals.css';
-import Image from 'next/image';
 
 export const getServerSideProps: GetServerSideProps = async () => {
     try {
@@ -29,7 +30,10 @@ export const getServerSideProps: GetServerSideProps = async () => {
 const CustomPrevArrow = ({ onClick }: { onClick?: () => void }) => {
     return (
         <button
-            className="absolute left-[-40px] top-1/2 transform -translate-y-1/2 z-10 bg-gray-800 text-white p-2 rounded-full shadow hover:bg-gray-700"
+            className="opacity-50 absolute left-[-30px] top-1/2 
+                        transform -translate-y-1/2 z-10 bg-white text-gray-800 
+                        p-3 rounded-full shadow-md border border-gray-300 
+                        hover:bg-gray-100 hover:scale-110 transition-transform duration-300 ease-in-out"
             onClick={onClick}
         >
             ←
@@ -40,7 +44,10 @@ const CustomPrevArrow = ({ onClick }: { onClick?: () => void }) => {
 const CustomNextArrow = ({ onClick }: { onClick?: () => void }) => {
     return (
         <button
-            className="absolute right-[-40px] top-1/2 transform -translate-y-1/2 z-10 bg-gray-800 text-white p-2 rounded-full shadow hover:bg-gray-700"
+            className="opacity-50 absolute right-[-30px] top-1/2 
+                        transform -translate-y-1/2 z-10 bg-white text-gray-800 
+                        p-3 rounded-full shadow-md border border-gray-300 
+                        hover:bg-gray-100 hover:scale-110 transition-transform duration-300 ease-in-out"
             onClick={onClick}
         >
             →
@@ -61,6 +68,7 @@ const sliderSettings = {
 };
 
 function Home({ data }: { data: Product[] }) {
+    const [isLoading, setIsLoading] = useState(true);
     const [categories, setCategories] = useState<string[]>([]);
     const [groupedProducts, setGroupedProducts] = useState<Record<string, Product[]>>({});
 
@@ -78,41 +86,49 @@ function Home({ data }: { data: Product[] }) {
         }, {} as Record<string, Product[]>);
 
         setGroupedProducts(grouped);
+        setTimeout(() => {
+            setIsLoading(false);
+        }, 600);
+        
     }, [data]);
+
+    if (isLoading) return <Loading />
 
     return (
         <>
             <NavigationBar />
-            <div className="mx-auto my-6 mt-32 max-w-screen-2xl">
-                <Slider {...sliderSettings}>
-                    <div className="h-[500px] flex items-center justify-center bg-gray-200">
+            <div className="mx-auto my-6 mt-32 max-w-screen-2xl shadow-2xl rounded-xl">
+                <Slider {...sliderSettings} >
+                    <div className="h-[500px] flex items-center justify-center rounded-xl">
                         <Image
                             src="https://i.imgur.com/7LxsGtY.jpeg"
                             alt="廣告 1"
-                            width={1200}
+                            width={1500}
                             height={300}
-                            className="object-cover w-full h-full"
-                            priority
+                            loading='lazy'
+                            className="object-cover w-full h-full rounded-xl"
                         />
                     </div>
 
-                    <div className="h-[500px] flex items-center justify-center bg-gray-200">
+                    <div className="h-[500px] flex items-center justify-center rounded-xl">
                         <Image
                             src="https://i.imgur.com/FhSWoZt.png"
                             alt="廣告 2"
-                            width={1200}
+                            width={1500}
                             height={300}
-                            className="object-cover w-full h-full"
+                            loading='lazy'
+                            className="object-cover w-full h-full rounded-xl"
                         />
                     </div>
 
-                    <div className="h-[500px] flex items-center justify-center bg-gray-200">
+                    <div className="h-[500px] flex items-center justify-center rounded-xl">
                         <Image
                             src="https://i.imgur.com/V4j3d7Y.jpeg"
                             alt="廣告 3"
-                            width={1200}
+                            width={1500}
                             height={300}
-                            className="object-cover w-full h-full"
+                            loading='lazy'
+                            className="object-cover w-full h-full rounded-xl"
                         />
                     </div>
                 </Slider>
