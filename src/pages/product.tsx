@@ -203,7 +203,9 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                     </div>
                 </div>
             </div>
-            <Link href={{ pathname: '/admin', query: { id: product.id } }}>Admin</Link>
+            {localStorage.getItem("isAdmin") === "true" ? 
+                (<Link href={{ pathname: '/admin', query: { id: product.id } }}>Admin</Link>) : ''}
+            
             <div className="bg-white shadow-lg rounded-lg p-12 max-w-4xl w-full mt-8">
                 <h1 className="text-2xl font-bold text-gray-800 text-center">推薦商品</h1>
                 <div className="flex flex-wrap mx-4 mt-6">

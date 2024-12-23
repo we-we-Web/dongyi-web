@@ -3,11 +3,9 @@
 import React, { useState,useEffect } from 'react';
 import NavigationBar from '../app/component/NavigationBar';
 import ProductImage from '../app/component/ProductImage';
-import { GrEdit } from "react-icons/gr";
 import {Product,ProductSpec} from '../app/model/product';
 import { GetServerSideProps } from 'next';
 import '../globals.css';
-import { Input } from 'postcss';
 
 export const getServerSideProps: GetServerSideProps = async(context) => {
     const ProductId = context.query!;

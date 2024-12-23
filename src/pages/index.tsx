@@ -1,4 +1,6 @@
 import { GetServerSideProps } from 'next';
+import { jwtDecode } from 'jwt-decode';
+import { UserProfile } from '../app/model/userProfile';
 import ProductCard from '../app/component/ProductCard';
 import { Product } from '../app/model/product';
 import NavigationBar from '../app/component/NavigationBar';
@@ -79,6 +81,32 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
             setIsLoading(false);
         }, 600);
         
+        if(localStorage.getItem('access-token')) {
+            const token = localStorage.getItem('access-token');
+            let email = '';
+            if (token) {
+                const decoded: UserProfile = jwtDecode(token);
+                email = decoded.email;
+            }
+            try{
+                const url = `https://dongyi-api.hnd1.zeabur.app/user/account/isAdmin/${email}`;
+                const checkAdmin = async() => {
+                    try{
+                        const response = fetch(url);
+                        const data = await (await response).json();
+                        localStorage.setItem('isAdmin', `${data}`);
+                    }
+                    catch(err) {
+                        console.log(err);
+                    }
+                }
+                checkAdmin();
+            }
+            catch(err) {
+                console.log(err);
+            }
+        }
+
     }, [products]);
 
     if (isLoading) return <Loading />
@@ -110,7 +138,7 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
             </div>
             <div className="container mx-auto px-4 py-8 mt-16">
                 <h1 className="text-4xl font-bold text-center mb-12">商品列表</h1>
-                {isAdmin ? (<Link href={{pathname: '/admin', query: { id: -1 }}}>新增商品</Link>):('')}
+                {localStorage.getItem("isAdmin") === "true" ? (<Link href={{pathname: '/admin', query: { id: -1 }}}>新增商品</Link>):('')}
                 {categories.map((category) => (
                     <div key={category} className="mb-12">
                         <h2 className="text-2xl font-semibold mb-6 border-b-2 border-gray-300 pb-2">
