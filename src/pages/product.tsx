@@ -9,7 +9,6 @@ import ProductImageGallery from '../app/component/ProductImageGallery';
 
 import ProductCard from '../app/component/ProductCard';
 import NavigationBar from '../app/component/NavigationBar';
-import ProductImage from '../app/component/ProductImage';
 
 import LoginPopup from '../app/component/LoginPopup';
 import '../globals.css';
