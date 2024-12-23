@@ -2,14 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { Product } from '../app/model/product';
-import ProductCard from '../app/component/ProductCard';
-import NavigationBar from '../app/component/NavigationBar';
 import { GetServerSideProps } from 'next';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
+import ProductCard from '../app/component/ProductCard';
+import NavigationBar from '../app/component/NavigationBar';
 import ProductImage from '../app/component/ProductImage';
 import LoginPopup from '../app/component/LoginPopup';
 import '../globals.css';
+import Link from 'next/link';
 
 export const getServerSideProps: GetServerSideProps = async(context) => {
     const ProductId = context.query!;
@@ -224,6 +225,9 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                     </div>
                 </div>
             </div>
+            {localStorage.getItem("isAdmin") === "true" ? 
+                (<Link href={{ pathname: '/admin', query: { id: product.id } }}>Admin</Link>) : ''}
+            
             <div className="bg-white shadow-lg rounded-lg p-12 max-w-4xl w-full mt-8">
                 <h1 className="text-2xl font-bold text-gray-800 text-center">推薦商品</h1>
                 <div className="flex flex-wrap mx-4 mt-6">
