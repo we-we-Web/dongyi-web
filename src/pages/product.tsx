@@ -5,9 +5,12 @@ import { Product } from '../app/model/product';
 import { GetServerSideProps } from 'next';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
+import ProductImageGallery from '../app/component/ProductImageGallery';
+
 import ProductCard from '../app/component/ProductCard';
 import NavigationBar from '../app/component/NavigationBar';
 import ProductImage from '../app/component/ProductImage';
+
 import LoginPopup from '../app/component/LoginPopup';
 import '../globals.css';
 import Link from 'next/link';
@@ -135,7 +138,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
             <div className="bg-white shadow-lg rounded-lg p-8 max-w-4xl w-full mt-20">
                 <div className="flex flex-col md:flex-row md:space-x-8">
                     <div className="flex-1 rounded-lg border border-slate-300">
-                        <ProductImage id={product.id} name={product.name} isIndex={false} index={0}/>
+                        <ProductImageGallery id={product.id} name={product.name} isIndex={false} index={0}/>
                     </div>
 
                     <div className="flex-1 flex flex-col space-y-4">
