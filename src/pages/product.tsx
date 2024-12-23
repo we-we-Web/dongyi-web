@@ -63,6 +63,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
 
     const handleSizeSelect = (size: string) => {
         setSelectedSize(size);
+        setQuantity(1);
     };
 
     const handleQuantityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,6 +90,13 @@ export default function ProductContent({ product, recommendedProducts }: { produ
         if (email === '') {
             setIsLoginOpen(true);
             return ;
+        }
+
+        const stock = product.size[selectedSize];
+        if(quantity > stock) {
+            setToast({ message: "The stock is not enough.", type: "error" });
+            setTimeout(() => setToast(null), 3000);
+            return;
         }
         const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
         const request = {
@@ -141,19 +149,30 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                         <div>
                             <h2 className="text-gray-700 font-semibold mb-2">Size:</h2>
                             <div className="flex space-x-2">
-                                {Object.keys(product.size).map((size) => (
-                                    <button
-                                        key={size}
-                                        onClick={() => handleSizeSelect(size)}
-                                        className={`px-4 py-2 rounded-lg border ${
-                                            selectedSize === size
-                                                ? "bg-purple-600 text-white"
-                                                : "bg-gray-200 text-gray-800"
-                                        } hover:bg-purple-500 hover:text-white`}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
+                                {Object.keys(product.size).map((size) => {
+                                    const stock = product.size[size];
+                                    const isOutOfStock = stock === 0;
+                                    return (
+                                        <button
+                                            key={size}
+                                            onClick={() => !isOutOfStock && handleSizeSelect(size)}
+                                            disabled={isOutOfStock}
+                                            className={`px-4 py-2 rounded-lg border ${
+                                                selectedSize === size
+                                                    ? "bg-purple-600 text-white"
+                                                    : isOutOfStock
+                                                        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                                                        : "bg-gray-200 text-gray-800"
+                                            } 
+                                            ${!isOutOfStock && "hover:bg-purple-500 hover:text-white"} 
+                                            ${isOutOfStock && "opacity-50"}
+                                            `}
+                                            title={isOutOfStock ? "Out of stock" : `Select size ${size}`}
+                                        >
+                                            {size} {isOutOfStock && "(Sold out)"}
+                                        </button>
+                                    );
+                                })}
                             </div>
                             {selectedSize && (
                                 <p className="text-sm text-green-600 mt-2">
@@ -180,6 +199,8 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                                     value={quantity}
                                     onChange={handleQuantityChange}
                                     className="w-16 text-center border border-gray-300 rounded-lg"
+                                    min="1"
+                                    max={selectedSize ? product.size[selectedSize] : undefined}
                                 />
                                 <button
                                     onClick={handleQuantityIncrease}
@@ -188,6 +209,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                                             ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-30"
                                             : "bg-gray-200 hover:bg-violet-600 hover:text-white"
                                     }`}
+                                    disabled={selectedSize ? quantity >= product.size[selectedSize] : true}
                                 >
                                     +
                                 </button>
