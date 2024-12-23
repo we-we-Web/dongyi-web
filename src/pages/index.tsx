@@ -62,7 +62,6 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
     const [isLoading, setIsLoading] = useState(true);
     const [categories, setCategories] = useState<string[]>([]);
     const [groupedProducts, setGroupedProducts] = useState<Record<string, Product[]>>({});
-    const [isAdmin, setIsAdmin] = useState(true);
     useEffect(() => {
         const uniqueCategories = Array.from(
             new Set(products.map((product) => product.categories)

@@ -17,7 +17,7 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
     }
     try {
         let url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${ProductId.id}`;
-        let response = await fetch(url);
+        const response = await fetch(url);
         if (response.ok) {
             const product: Product = await response.json();
             console.log(`Get product ${ProductId.id} successfully`);
@@ -90,14 +90,14 @@ export default function Admin({ product,url,method }: { product: Product,url:str
             setSize(tmpSize);
         } else {
             if(remain_amount > 0 && selectedSize && newProduct.size.hasOwnProperty(selectedSize)){
-                let tmpSize = { ...size };
+                const tmpSize = { ...size };
                 tmpSize[selectedSize] = remain_amount;
                 console.log('tmpSize:', tmpSize);
                 setSize(tmpSize);
                 // setSize({ ...size, [newSize]: remain_amount });
             } else {
                 if (selectedSize) {
-                    let tmpSize = { ...size };
+                    const tmpSize = { ...size };
                     tmpSize[selectedSize] = remain_amount;
                     setSize(tmpSize);
                 }
