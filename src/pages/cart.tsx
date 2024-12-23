@@ -73,11 +73,38 @@ export default function CartPage() {
                 const result = await response.json();
                 // console.log(result);
                 setCartItems(result.products);
+            } else if (response.status === 404) {
+                createCart(email);
             } else {
                 console.log('fetch cart failed:', response.status);
             }
         } catch (err) {
             console.log(err);
+        }
+    }
+
+    const createCart = async(email:string) => {
+        const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/cart-create';
+        const request = {
+            "id": `${email}`,
+        }
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(request),
+            });
+            if (response.ok) {
+                const result = await response.json();
+                setEmail(result);
+            } else {
+                console.error('create cart error:', response.status);
+            }
+        } catch (err) {
+            console.log(err);
+            router.push('/');
         }
     }
 
