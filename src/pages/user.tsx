@@ -47,6 +47,7 @@ function UserPage() {
                 setUser(result);
             } else if (response.status === 404) {
                 createUser(email, name);
+                createCart(email);
             } else {
                 console.error('fetch user error:', response.status);
             }
@@ -84,6 +85,31 @@ function UserPage() {
 
     if (!user) {
         return <Loading />;
+    }
+
+    const createCart = async(email:string) => {
+        const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/cart-create';
+        const request = {
+            "id": `${email}`,
+        }
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(request),
+            });
+            if (response.ok) {
+                const result = await response.json();
+                setUser(result);
+            } else {
+                console.error('create cart error:', response.status);
+            }
+        } catch (err) {
+            console.log(err);
+            router.push('/');
+        }
     }
 
     return (
