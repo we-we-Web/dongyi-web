@@ -2,14 +2,18 @@
 
 import React, { useEffect, useState } from 'react';
 import { Product } from '../app/model/product';
-import ProductCard from '../app/component/ProductCard';
-import NavigationBar from '../app/component/NavigationBar';
 import { GetServerSideProps } from 'next';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
+import ProductImageGallery from '../app/component/ProductImageGallery';
+
+import ProductCard from '../app/component/ProductCard';
+import NavigationBar from '../app/component/NavigationBar';
 import ProductImage from '../app/component/ProductImage';
+
 import LoginPopup from '../app/component/LoginPopup';
 import '../globals.css';
+import Link from 'next/link';
 
 export const getServerSideProps: GetServerSideProps = async(context) => {
     const ProductId = context.query!;
@@ -63,6 +67,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
 
     const handleSizeSelect = (size: string) => {
         setSelectedSize(size);
+        setQuantity(1);
     };
 
     const handleQuantityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,6 +94,13 @@ export default function ProductContent({ product, recommendedProducts }: { produ
         if (email === '') {
             setIsLoginOpen(true);
             return ;
+        }
+
+        const stock = product.size[selectedSize];
+        if(quantity > stock) {
+            setToast({ message: "The stock is not enough.", type: "error" });
+            setTimeout(() => setToast(null), 3000);
+            return;
         }
         const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/item-upd';
         const request = {
@@ -126,7 +138,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
             <div className="bg-white shadow-lg rounded-lg p-8 max-w-4xl w-full mt-20">
                 <div className="flex flex-col md:flex-row md:space-x-8">
                     <div className="flex-1 rounded-lg border border-slate-300">
-                        <ProductImage id={product.id} name={product.name} isIndex={false} index={0}/>
+                        <ProductImageGallery id={product.id} name={product.name} isIndex={false} index={0}/>
                     </div>
 
                     <div className="flex-1 flex flex-col space-y-4">
@@ -141,19 +153,30 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                         <div>
                             <h2 className="text-gray-700 font-semibold mb-2">Size:</h2>
                             <div className="flex space-x-2">
-                                {Object.keys(product.size).map((size) => (
-                                    <button
-                                        key={size}
-                                        onClick={() => handleSizeSelect(size)}
-                                        className={`px-4 py-2 rounded-lg border ${
-                                            selectedSize === size
-                                                ? "bg-purple-600 text-white"
-                                                : "bg-gray-200 text-gray-800"
-                                        } hover:bg-purple-500 hover:text-white`}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
+                                {Object.keys(product.size).map((size) => {
+                                    const stock = product.size[size];
+                                    const isOutOfStock = stock === 0;
+                                    return (
+                                        <button
+                                            key={size}
+                                            onClick={() => !isOutOfStock && handleSizeSelect(size)}
+                                            disabled={isOutOfStock}
+                                            className={`px-4 py-2 rounded-lg border ${
+                                                selectedSize === size
+                                                    ? "bg-purple-600 text-white"
+                                                    : isOutOfStock
+                                                        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                                                        : "bg-gray-200 text-gray-800"
+                                            } 
+                                            ${!isOutOfStock && "hover:bg-purple-500 hover:text-white"} 
+                                            ${isOutOfStock && "opacity-50"}
+                                            `}
+                                            title={isOutOfStock ? "Out of stock" : `Select size ${size}`}
+                                        >
+                                            {size} {isOutOfStock && "(Sold out)"}
+                                        </button>
+                                    );
+                                })}
                             </div>
                             {selectedSize && (
                                 <p className="text-sm text-green-600 mt-2">
@@ -180,6 +203,8 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                                     value={quantity}
                                     onChange={handleQuantityChange}
                                     className="w-16 text-center border border-gray-300 rounded-lg"
+                                    min="1"
+                                    max={selectedSize ? product.size[selectedSize] : undefined}
                                 />
                                 <button
                                     onClick={handleQuantityIncrease}
@@ -188,6 +213,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                                             ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-30"
                                             : "bg-gray-200 hover:bg-violet-600 hover:text-white"
                                     }`}
+                                    disabled={selectedSize ? quantity >= product.size[selectedSize] : true}
                                 >
                                     +
                                 </button>
@@ -202,6 +228,9 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                     </div>
                 </div>
             </div>
+            {localStorage.getItem("isAdmin") === "true" ? 
+                (<Link href={{ pathname: '/admin', query: { id: product.id } }}>Admin</Link>) : ''}
+            
             <div className="bg-white shadow-lg rounded-lg p-12 max-w-4xl w-full mt-8">
                 <h1 className="text-2xl font-bold text-gray-800 text-center">推薦商品</h1>
                 <div className="flex flex-wrap mx-4 mt-6">
