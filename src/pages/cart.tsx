@@ -73,9 +73,10 @@ export default function CartPage() {
                 const result = await response.json();
                 // console.log(result);
                 setCartItems(result.products);
+            } else if (response.status === 404) {
+                createCart(email);
             } else {
                 console.log('fetch cart failed:', response.status);
-                createCart(email);
             }
         } catch (err) {
             console.log(err);
