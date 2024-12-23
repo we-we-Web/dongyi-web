@@ -11,7 +11,6 @@ import ProductImage from '../app/component/ProductImage';
 import LoginPopup from '../app/component/LoginPopup';
 import '../globals.css';
 import Link from 'next/link';
-// import Admin from './admin';
 
 export const getServerSideProps: GetServerSideProps = async(context) => {
     const ProductId = context.query!;
@@ -121,6 +120,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
 
         setTimeout(() => setToast(null), 3000);
     };
+
     return (
         <div className="flex flex-col items-center bg-gray-50 min-h-screen py-10">
             <NavigationBar />

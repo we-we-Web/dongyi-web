@@ -12,8 +12,10 @@ import { Input } from 'postcss';
 export const getServerSideProps: GetServerSideProps = async(context) => {
     const ProductId = context.query!;
     if (ProductId.id === '-1') {
-        const product: Product = { id: '-1', name: '', price: 0, description: '', size: {}, discount: 0, categories: '' };
-        return { props: {product} };
+        const product: Product = { id: '-1', name: '新商品', price: 0, description: '無', size: {}, discount: 0, categories: 'categories' };
+        const url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/`;
+        const method = 'POST';
+        return { props: {product,url,method} };
     }
     try {
         let url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${ProductId.id}`;
@@ -21,7 +23,9 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
         if (response.ok) {
             const product: Product = await response.json();
             console.log(`Get product ${ProductId.id} successfully`);
-            return { props: { product } };
+            url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${product.id}`;
+            const method = 'PATCH';
+            return { props: { product,url,method } };
         } else {
             console.error('failed to fetch:', response.status);
             return { props: {} };
@@ -32,7 +36,7 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
     }
 }
 
-export default function Admin({ product }: { product: Product }) {
+export default function Admin({ product,url,method }: { product: Product,url:string,method:string }) {
     const [onEdit, setOnEdit] = useState(false);
     const [newProduct, setNewProduct] = useState<Product>(product);
     const [selectedFile, setSelectedFile] = useState<File>();
@@ -40,7 +44,8 @@ export default function Admin({ product }: { product: Product }) {
     const [remain_amount, setRemain_amount] = useState<number>(0);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
-    
+    const [enableSendImg, setEnableSendImg] = useState<boolean>(false);
+
     const handleSizeSelect = (size: string) => {
         setSelectedSize(size);
     };
@@ -100,26 +105,23 @@ export default function Admin({ product }: { product: Product }) {
                 }
             }
         }
+        setToast({ message: 'Size updated', type: 'success' });
+        setTimeout(() => setToast(null), 3000);
     }
 
     useEffect(() => {
-        // 當 size 更新時執行這些操作
         sortDictionaryByKeys(size, sizeOrder);
         save('size', size);
-        console.log('size:', size);
-        setToast({ message: 'Size updated', type: 'success' });
-        setTimeout(() => setToast(null), 3000);
     }, [size]);
 
-    let url = '', method = '';
-    if(product.id ==='-1'){
-        url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/`;
-        method = 'POST';
-    }
-    else {
-        url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${product.id}`;
-        method = 'PATCH';
-    }
+    useEffect(() => {
+        if(method === 'POST'){
+            setEnableSendImg(false);
+        }
+        else {
+            setEnableSendImg(true);
+        }
+    }, []);
 
     const send = async() => {
         const request = {
@@ -133,6 +135,7 @@ export default function Admin({ product }: { product: Product }) {
             image_url: '',
         }
         console.log("request : ",request);
+        console.log("url : ",url);
         try {
             const response = await fetch(url, {
                 method: method,
@@ -141,14 +144,10 @@ export default function Admin({ product }: { product: Product }) {
                 },
                 body: JSON.stringify(request),
             });
-            if (selectedFile) {
-                const formData = new FormData();
-                formData.append('file', selectedFile);
-                await sendImg(formData, newProduct.id ? product.id : newProduct.id);
-            }
             if(response.ok){
                 const result = await response.json();
                 console.log(result);
+                setEnableSendImg(true);
                 setToast({ message: 'updata successfully: '+ result, type: 'success' });
                 setTimeout(() => setToast(null), 3000);
                 return;
@@ -160,13 +159,16 @@ export default function Admin({ product }: { product: Product }) {
             console.error('error:', err);
         }
     }
-
+    const handleSendImg = async () => {
+        if (selectedFile) {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            await sendImg(formData, newProduct.id);
+        }
+    }
     const sendImg = async (newImg: FormData, id: string) => {
         const url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/upload_image?product_id=${id}`;
         console.log('url:', url);
-        // for (let pair of newImg.entries()) {
-        //     console.log(pair[0] + ', ' + pair[1]);
-        // }
         try {
             const response = await fetch(url, {
                 method: 'PATCH',
@@ -232,6 +234,16 @@ export default function Admin({ product }: { product: Product }) {
                         }
                     </div>
                     <div className="flex-1 flex flex-col space-y-4">
+                        <p className="text-gray-600">
+                            {onEdit ?
+                                (<input type='text'
+                                    placeholder={newProduct.id} 
+                                    className='border border-gray-400 w-full' 
+                                    onChange={(e) => save('id', e.target.value)}
+                                    style={{ whiteSpace: 'pre-wrap' }}
+                                ></input>) : 
+                                (newProduct.id)
+                        }</p>
                         <h1 className="text-2xl font-bold text-gray-800">
                             {onEdit ?
                                 (<textarea 
@@ -243,6 +255,14 @@ export default function Admin({ product }: { product: Product }) {
                                 (newProduct.name)
                             }
                         </h1>
+
+                        {onEdit ?
+                            (<input type='text' 
+                                placeholder={String(newProduct.price)} 
+                                className='border border-gray-400' 
+                                onChange={(e) => save('price', e.target.value)}></input>) : 
+                            (<p className="text-lg font-semibold text-purple-600">${newProduct.price}</p>)
+                        }
                         
                         <p className="text-gray-600">
                             {onEdit ?
@@ -255,13 +275,17 @@ export default function Admin({ product }: { product: Product }) {
                                 (newProduct.description)
                             }</p>
                         
-                        {onEdit ?
-                            (<input type='text' 
-                                placeholder={String(newProduct.price)} 
-                                className='border border-gray-400' 
-                                onChange={(e) => save('price', e.target.value)}></input>) : 
-                            (<p className="text-lg font-semibold text-purple-600">${newProduct.price}</p>)
-                        }
+                        <p className="text-gray-600">
+                            {onEdit ?
+                                (<input type='text'
+                                    placeholder={newProduct.categories} 
+                                    className='border border-gray-400 w-full' 
+                                    onChange={(e) => save('categories', e.target.value)}
+                                    style={{ whiteSpace: 'pre-wrap' }}
+                                ></input>) : 
+                                (newProduct.categories)
+                        }</p>
+
 
                         <div>
                             <h2 className="text-gray-700 font-semibold mb-2">Size:</h2>
@@ -298,7 +322,6 @@ export default function Admin({ product }: { product: Product }) {
                                 </div>) : 
                                 ('')
                             }
-                            {/* <h2 className="text-gray-700 font-semibold">Quantity:</h2> */}
                             
                         </div>
 
@@ -317,6 +340,13 @@ export default function Admin({ product }: { product: Product }) {
                         onClick={() => send()}>
                         Save
                     </button>
+                    {enableSendImg && selectedFile ? (
+                        <button 
+                            className="bg-green-600 w-36 h-[2em] text-white hover:opacity-60 ml-4" 
+                            onClick={() => handleSendImg()}>
+                            SaveImg
+                        </button>
+                        ) : ''}
                     <button 
                         className="bg-gray-500 w-36 h-[2em] text-white hover:opacity-60 ml-4"
                         onClick={Delete}>
