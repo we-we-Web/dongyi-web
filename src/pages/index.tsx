@@ -62,6 +62,7 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
     const [isLoading, setIsLoading] = useState(true);
     const [categories, setCategories] = useState<string[]>([]);
     const [groupedProducts, setGroupedProducts] = useState<Record<string, Product[]>>({});
+    const [isAdmin, setIsAdmin] = useState(false);
     useEffect(() => {
         const uniqueCategories = Array.from(
             new Set(products.map((product) => product.categories)
@@ -94,6 +95,7 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
                         const response = fetch(url);
                         const data = await (await response).json();
                         localStorage.setItem('isAdmin', `${data}`);
+                        setIsAdmin(data);
                     }
                     catch(err) {
                         console.log(err);
@@ -137,7 +139,7 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
             </div>
             <div className="container mx-auto px-4 py-8 mt-16">
                 <h1 className="text-4xl font-bold text-center mb-12">商品列表</h1>
-                {localStorage.getItem("isAdmin") === "true" ? (<Link href={{pathname: '/admin', query: { id: -1 }}}>新增商品</Link>):('')}
+                {isAdmin ? (<Link href={{pathname: '/admin', query: { id: -1 }}}>新增商品</Link>):('')}
                 {categories.map((category) => (
                     <div key={category} className="mb-12">
                         <h2 className="text-2xl font-semibold mb-6 border-b-2 border-gray-300 pb-2">

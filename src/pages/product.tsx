@@ -50,6 +50,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
     const [quantity, setQuantity] = useState<number>(1);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -61,6 +62,9 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                 console.error("無效的 JWT:", error);
                 localStorage.removeItem('access-token');
             }
+        }
+        if(localStorage.getItem("isAdmin") === "true") {
+            setIsAdmin(true);
         }
     }, []);
 
@@ -227,7 +231,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                     </div>
                 </div>
             </div>
-            {localStorage.getItem("isAdmin") === "true" ? 
+            {isAdmin ? 
                 (<Link href={{ pathname: '/admin', query: { id: product.id } }}>Admin</Link>) : ''}
             
             <div className="bg-white shadow-lg rounded-lg p-12 max-w-4xl w-full mt-8">
