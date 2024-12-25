@@ -38,7 +38,7 @@ function ProductImageGallery({id, name, isIndex }: {id: string, name: string, is
                     effect="blur"
                     onError={() => setSrc(['https://media.tenor.com/IfbOs_yh89AAAAAM/loading-buffering.gif'])}
                 />
-            </div>、
+            </div>
             {src.length > 1 && (
                 <div className="flex space-x-2">
                     {src.map((image, index) => (
