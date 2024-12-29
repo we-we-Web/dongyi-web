@@ -14,13 +14,16 @@ import { User } from '../app/model/userModel';
 function UserPage() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
+    const [orderStatus, setOrderStatus] = useState<Map<string, string>>(new Map());
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
         if (token) {
             try {
                 const decoded: UserProfile = jwtDecode(token);
-                fetchUser(decoded.email, decoded.name);
+                fetchUser(decoded.email, decoded.name).then(()=>{
+                    if (user) fetchOrder(decoded.email);
+                });
             } catch (error) {
                 console.error("無效的 JWT:", error);
             }
@@ -112,6 +115,36 @@ function UserPage() {
         }
     }
 
+    const fetchOrder = async (email: string) => {
+        const url = 'https://dongyi-api.hnd1.zeabur.app/order/api/order-get';
+        const tmp = new Map<string, string>();
+    
+        await Promise.all(
+            user.orders.map(async (orderId) => {
+                const request = {
+                    id: orderId,
+                    owner: email,
+                };
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(request),
+                    });
+                    if (response.ok) {
+                        const result = await response.json();
+                        tmp.set(orderId, result.status);
+                    }
+                } catch (err) {
+                    console.error(`At ${orderId}:`, err);
+                }
+            })
+        );
+        setOrderStatus(tmp);
+    };
+
     return (
         <>
             <NavigationBar />
@@ -134,14 +167,17 @@ function UserPage() {
                             {user.orders.map((orderId) => (
                                 <li key={orderId} className="flex justify-between items-center">
                                     <span className="text-gray-500">
-                                        Order #{orderId}
+                                        Order #{orderId}  
                                     </span>
-                                    <Link 
-                                        href={`/order?id=${orderId}`} 
-                                        className="text-purple-600 text-sm hover:underline"
-                                    >
-                                        View Details
-                                    </Link>
+                                    <div className="flex items-center space-x-4">
+                                        <span className="text-gray-600">{orderStatus.get(orderId)}</span>
+                                        <Link 
+                                            href={`/order?id=${orderId}`} 
+                                            className="text-purple-600 text-sm hover:underline"
+                                        >
+                                            View Details
+                                        </Link>
+                                    </div>
                                 </li>
                             ))}
                         </ul>
