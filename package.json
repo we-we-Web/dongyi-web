@@ -39,7 +39,7 @@
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22",
-    "@types/react": "^19",
+    "@types/react": "^19.0.2",
     "@types/react-dom": "^19",
     "@types/react-image-magnify": "^2.7.4",
     "@types/react-lazy-load-image-component": "^1.6.4",

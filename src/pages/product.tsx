@@ -6,6 +6,7 @@ import { GetServerSideProps } from 'next';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
 import ProductImageGallery from '../app/component/ProductImageGallery';
+import FavoriteButton from '../app/component/FavoriteButton';
 
 import ProductCard from '../app/component/ProductCard';
 import NavigationBar from '../app/component/NavigationBar';
@@ -51,6 +52,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isFavorite, setIsFavorite] = useState<boolean>(false);
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -67,6 +69,25 @@ export default function ProductContent({ product, recommendedProducts }: { produ
             setIsAdmin(true);
         }
     }, []);
+    useEffect(() => {
+        const fetchFavoriteStatus = async () => {
+            if (email) {
+                const url = `https://dongyi-api.hnd1.zeabur.app/favorites/api/check-favorite?email=${email}&productId=${product.id}`;
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const { isFavorite } = await response.json();
+                        setIsFavorite(isFavorite);
+                    }
+                } catch (error) {
+                    console.error('Error fetching favorite status:', error);
+                }
+            }
+        };
+    
+        fetchFavoriteStatus();
+    }, [email, product.id]);
+    
 
     const handleSizeSelect = (size: string) => {
         setSelectedSize(size);
@@ -134,16 +155,62 @@ export default function ProductContent({ product, recommendedProducts }: { produ
 
         setTimeout(() => setToast(null), 3000);
     };
-
+    const handleToggleFavorite = async () => {
+        if (email === '') {
+            setIsLoginOpen(true); 
+            return;
+        }
+    
+        const url = 'https://dongyi-api.hnd1.zeabur.app/favorite/api/item-toggle'; 
+        const request = {
+            id: email,
+            product: `${product.id}`,
+        };
+    
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(request),
+            });
+    
+            if (response.ok) {
+                const result = await response.json();
+                if (result.isFavorite) {
+                    setToast({ message: "Added to favorites successfully!", type: "success" });
+                } else {
+                    setToast({ message: "Removed from favorites.", type: "success" });
+                }
+            } else {
+                setToast({
+                    message: `Error occurred while updating favorites: ${response.status}`,
+                    type: "error",
+                });
+            }
+        } catch (error) {
+            console.error(error);
+            setToast({ message: "Failed to update favorites.", type: "error" });
+        }
+    
+        setTimeout(() => setToast(null), 3000); // 提示訊息3秒後自動隱藏
+    };        
     return (
         <div className="flex flex-col items-center bg-gray-50 min-h-screen py-10">
             <NavigationBar />
             <div className="bg-white shadow-lg rounded-lg p-8 max-w-4xl w-full mt-20">
                 <div className="flex flex-col md:flex-row md:space-x-8">
-                    <div className="flex-1 rounded-lg border border-slate-300">
-                        <ProductImageGallery id={product.id} name={product.name} isIndex={false} index={0}/>
+                <div className="flex-1 rounded-lg border border-slate-300 relative">
+                    <div className="absolute top-2 right-2 z-10">
+                        <FavoriteButton
+                            productId={product.id}
+                            isFavorite={isFavorite}
+                            onToggleFavorite={handleToggleFavorite}
+                        />
                     </div>
-
+                    <ProductImageGallery id={product.id} name={product.name} isIndex={false} index={0} />
+                </div>
                     <div className="flex-1 flex flex-col space-y-4">
                         <h1 className="text-2xl font-bold text-gray-800">
                             {product.name}

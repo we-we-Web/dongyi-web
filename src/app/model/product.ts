@@ -7,6 +7,7 @@ export interface Product {
     description: string
     discount?: number
     categories?: string
+    isFavorite: boolean
 }
 
 export interface ProductSpec {
