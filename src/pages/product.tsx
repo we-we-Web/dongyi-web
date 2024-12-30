@@ -155,47 +155,52 @@ export default function ProductContent({ product, recommendedProducts }: { produ
 
         setTimeout(() => setToast(null), 3000);
     };
+    
     const handleToggleFavorite = async () => {
-        if (email === '') {
-            setIsLoginOpen(true); 
+        if (!email) {
+            setIsLoginOpen(true);
             return;
         }
     
-        const url = 'https://dongyi-api.hnd1.zeabur.app/favorite/api/item-toggle'; 
-        const request = {
+        const url = 'https://dongyi-api.hnd1.zeabur.app/user/account/liked-update';
+        const requestPayload = {
             id: email,
-            product: `${product.id}`,
+            liked: `${product.id}`,
         };
     
         try {
             const response = await fetch(url, {
-                method: 'POST',
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(request),
+                body: JSON.stringify(requestPayload),
             });
     
             if (response.ok) {
                 const result = await response.json();
-                if (result.isFavorite) {
-                    setToast({ message: "Added to favorites successfully!", type: "success" });
+                if (isFavorite) {
+                    setIsFavorite(false);
+                    setToast({ message: "Removed from favorites successfully.", type: "success" });
                 } else {
-                    setToast({ message: "Removed from favorites.", type: "success" });
+                    setIsFavorite(true);
+                    setToast({ message: "Added to favorites successfully!", type: "success" });
                 }
             } else {
+                const errorText = await response.text();
                 setToast({
-                    message: `Error occurred while updating favorites: ${response.status}`,
+                    message: `Error occurred while updating favorites: ${response.status} - ${errorText}`,
                     type: "error",
                 });
             }
         } catch (error) {
-            console.error(error);
-            setToast({ message: "Failed to update favorites.", type: "error" });
+            console.error('Error updating favorites:', error);
+            setToast({ message: "Failed to update favorites. Please try again later.", type: "error" });
         }
     
-        setTimeout(() => setToast(null), 3000); // 提示訊息3秒後自動隱藏
-    };        
+        setTimeout(() => setToast(null), 3000);
+    };
+
     return (
         <div className="flex flex-col items-center bg-gray-50 min-h-screen py-10">
             <NavigationBar />

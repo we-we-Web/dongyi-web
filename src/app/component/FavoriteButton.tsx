@@ -6,23 +6,30 @@ import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
 interface FavoriteButtonProps {
     productId: string;
     isFavorite: boolean;
-    onToggleFavorite: () => void;
+    onToggleFavorite: (productId: string, newState: boolean) => void;
 }
 
 const FavoriteButton: React.FC<FavoriteButtonProps> = ({ productId, isFavorite, onToggleFavorite }) => {
+    const [isFavoriteLocal, setIsFavoriteLocal] = useState(isFavorite);
     const [hovered, setHovered] = useState(false);
+
+    const handleToggleFavorite = () => {
+        const newState = !isFavoriteLocal;
+        setIsFavoriteLocal(newState);
+        onToggleFavorite(productId, newState);
+    };
 
     return (
         <button
-            onClick={onToggleFavorite}
+            onClick={handleToggleFavorite}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             className="focus:outline-none"
         >
             <FontAwesomeIcon
-                icon={isFavorite || hovered ? solidHeart : regularHeart}
+                icon={isFavoriteLocal || hovered ? solidHeart : regularHeart}
                 className={`text-2xl transition-colors ${
-                    isFavorite || hovered ? 'text-red-500' : 'text-gray-400'
+                    isFavoriteLocal || hovered ? 'text-red-500' : 'text-gray-400'
                 } hover:scale-110 hover:text-red-500 transition-transform duration-200`}
             />
         </button>
