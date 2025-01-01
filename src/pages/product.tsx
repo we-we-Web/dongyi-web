@@ -232,7 +232,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
                 </div>
             </div>
             {isAdmin ? 
-                (<Link href={{ pathname: '/admin', query: { id: product.id } }}>Admin</Link>) : ''}
+                (<Link href={{ pathname: '/update', query: { id: product.id } }}>Admin</Link>) : ''}
             
             <div className="bg-white shadow-lg rounded-lg p-12 max-w-4xl w-full mt-8">
                 <h1 className="text-2xl font-bold text-gray-800 text-center">推薦商品</h1>

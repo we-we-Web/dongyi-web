@@ -11,6 +11,7 @@ function LoginButton() {
     const router = useRouter();
     const [isLoginOpen, setLoginOpen] = useState(false);
     const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -23,6 +24,9 @@ function LoginButton() {
                 localStorage.removeItem('access-token');
             }
         }
+        if(localStorage.getItem('isAdmin') === 'true') {
+            setIsAdmin(true);
+        }
     }, []);
 
     useEffect(() => {
@@ -31,7 +35,8 @@ function LoginButton() {
 
     const handleLoginClick = () => {
         if (profile) {
-            router.push('/user');
+            if(isAdmin) router.push('/admin');
+            else router.push('/user');
         } else {
             setLoginOpen(true);
         }
