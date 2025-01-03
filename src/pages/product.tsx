@@ -70,14 +70,16 @@ export default function ProductContent({ product, recommendedProducts }: { produ
         }
     }, []);
     useEffect(() => {
-        const fetchFavoriteStatus = async () => {
-            if (email) {
-                const url = `https://dongyi-api.hnd1.zeabur.app/favorites/api/check-favorite?email=${email}&productId=${product.id}`;
+        const GetUserFavorites = async () => {
+            if (email && product?.id) { 
+                const url = `https://dongyi-api.hnd1.zeabur.app/account/get-favorites?id=${email}`;
                 try {
                     const response = await fetch(url);
                     if (response.ok) {
-                        const { isFavorite } = await response.json();
-                        setIsFavorite(isFavorite);
+                        const { favorites } = await response.json(); 
+                        setIsFavorite(favorites.includes(product.id));
+                    } else {
+                        console.error('Failed to fetch:', response.status);
                     }
                 } catch (error) {
                     console.error('Error fetching favorite status:', error);
@@ -85,8 +87,8 @@ export default function ProductContent({ product, recommendedProducts }: { produ
             }
         };
     
-        fetchFavoriteStatus();
-    }, [email, product.id]);
+        GetUserFavorites();
+    }, [email, product?.id]);
     
 
     const handleSizeSelect = (size: string) => {
