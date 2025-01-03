@@ -8,12 +8,12 @@ import Link from 'next/link';
 import NavigationBar from '../app/component/NavigationBar';
 import '../globals.css';
 import { User } from '../app/model/userModel';
-
-
+import OTPPopup from '../app/component/OTPPopup';
 
 function UserPage() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
+    const [showOtpPopup, setShowOtpPopup] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -29,7 +29,7 @@ function UserPage() {
         }
     }, []);
 
-    const fetchUser = async(email: string, name: string) => {
+    const fetchUser = async (email: string, name: string) => {
         const url = 'https://dongyi-api.hnd1.zeabur.app/user/account/account-get';
         const request = {
             "id": `${email}`,
@@ -46,8 +46,9 @@ function UserPage() {
                 const result = await response.json();
                 setUser(result);
             } else if (response.status === 404) {
-                createUser(email, name);
+                await createUser(email, name);
                 createCart(email);
+                setShowOtpPopup(true);
             } else {
                 console.error('fetch user error:', response.status);
             }
@@ -57,8 +58,8 @@ function UserPage() {
         }
     };
 
-    const createUser = async(email: string, name: string) => {
-        const url = 'https://dongyi-api.hnd1.zeabur.app/user/account/account-create';
+    const createUser = async (email: string, name: string) => {
+        const url = 'https://dongyi-api.hnd1.zeabur.app/user/account/otp-send';
         const request = {
             "id": `${email}`,
             "name": `${name}`,
@@ -73,9 +74,9 @@ function UserPage() {
             });
             if (response.ok) {
                 const result = await response.json();
-                setUser(result);
+                console.log(result);
             } else {
-                console.error('create user error:', response.status);
+                console.error('error:', response.status);
             }
         } catch (err) {
             console.log(err);
@@ -83,11 +84,7 @@ function UserPage() {
         }
     };
 
-    if (!user) {
-        return <Loading />;
-    }
-
-    const createCart = async(email:string) => {
+    const createCart = async (email: string) => {
         const url = 'https://dongyi-api.hnd1.zeabur.app/cart/api/cart-create';
         const request = {
             "id": `${email}`,
@@ -110,6 +107,10 @@ function UserPage() {
             console.log(err);
             router.push('/');
         }
+    }
+
+    if (!user) {
+        return <Loading />;
     }
 
     return (
@@ -154,6 +155,7 @@ function UserPage() {
                     <LogoutButton />
                 </div>
             </div>
+            {showOtpPopup && <OTPPopup onClose={() => setShowOtpPopup(false)} setUser={setUser} />}
         </>
     );
 };
