@@ -14,7 +14,7 @@ import { User } from '../app/model/userModel';
 function UserPage() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
-    const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'collections'>('profile'); // 加入 collections 狀態
+    const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'liked'>('profile'); 
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -134,9 +134,9 @@ function UserPage() {
                         </li>
                         <li>
                             <button
-                                onClick={() => setActiveTab('collections')}
+                                onClick={() => setActiveTab('liked')}
                                 className={`text-gray-600 hover:text-purple-600 focus:outline-none w-full text-left ${
-                                    activeTab === 'collections' ? 'font-bold text-purple-600' : ''
+                                    activeTab === 'liked' ? 'font-bold text-purple-600' : ''
                                 }`}
                             >
                                 我的收藏
@@ -173,24 +173,24 @@ function UserPage() {
                         </>
                     )}
 
-                    {activeTab === 'collections' && (
+                    {activeTab === 'liked' && (
                         <>
                             <h2 className="text-xl font-semibold text-gray-800 mb-4">我的收藏</h2>
                             <hr className="mb-4 border-t border-gray-300" />
-                            {user.collections && user.collections.length > 0 ? (
+                            {user.liked && user.liked.length > 0 ? (
                                 <ul className="divide-y divide-gray-200">
-                                    {user.collections.map((collection) => (
+                                    {user.liked.map((collectionId) => (
                                         <li
-                                            key={collection.id}
+                                            key={collectionId}
                                             className="py-4 flex justify-between items-center"
                                         >
                                             <div>
                                                 <p className="text-sm text-gray-800">
-                                                    收藏項目: <span className="font-medium">{collection.name}</span>
+                                                    收藏項目: <span className="font-medium">{collectionId}</span>
                                                 </p>
                                             </div>
                                             <Link
-                                                href={`/collection?id=${collection.id}`}
+                                                href={`/collection?id=${collectionId}`}
                                                 className="text-purple-600 text-sm hover:underline"
                                             >
                                                 查看詳細資訊
