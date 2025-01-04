@@ -9,7 +9,7 @@ const Chatbot = () => {
     
     <Link href='/assistant'>
     <div
-        className="fixed bottom-5 right-5 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 cursor-pointer transition duration-300"
+      className="fixed bottom-5 right-5 bg-[#9E8DC2] text-white p-4 rounded-full shadow-lg hover:bg-[#C9B9CC] cursor-pointer transition duration-300"
     >
         <FontAwesomeIcon icon={faRobot} size="2x" />
     </div>
