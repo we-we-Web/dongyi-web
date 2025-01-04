@@ -22,19 +22,18 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
         let response = await fetch(url);
         if (response.ok) {
             const product: Product = await response.json();
-            const recommendedProducts: Product[] = [];
+            const recommendedProductsList: Product[] = [];
             console.log(`Get product ${ProductId.id} successfully`);
-            for(let i = 1; i <= 2; i++) { 
-                url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${i}`;
-                response = await fetch(url);
-                if (response.ok) {
-                    recommendedProducts.push(await response.json());
-                    console.log(`Get recommendedProducts ${i} successfully`);
-                } else {
-                    console.error('failed to fetch:', response.status);
-                }
+            url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/categories/${product.categories}`;
+            response = await fetch(url);
+            if (response.ok) {
+                const products: Product[] = await response.json();
+                recommendedProductsList.push(...products);
+                console.log(`Get recommendedProductsList successfully`);
+            } else {
+                console.error('failed to fetch:', response.status);
             }
-            return { props: { product, recommendedProducts} };
+            return { props: { product, recommendedProductsList} };
         } else {
             console.error('failed to fetch:', response.status);
             return { props: {} };
@@ -45,7 +44,7 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
     }
 }
 
-export default function ProductContent({ product, recommendedProducts }: { product: Product, recommendedProducts: Product[] }) {
+export default function ProductContent({ product, recommendedProductsList }: { product: Product, recommendedProductsList: Product[] }) {
     const [email, setEmail] = useState('');
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
     const [quantity, setQuantity] = useState<number>(1);
@@ -53,6 +52,7 @@ export default function ProductContent({ product, recommendedProducts }: { produ
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
+    const [recommendedProducts,setrecommendedProducts] = useState<Product[]>([]);
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -68,6 +68,17 @@ export default function ProductContent({ product, recommendedProducts }: { produ
         if(localStorage.getItem("isAdmin") === "true") {
             setIsAdmin(true);
         }
+        const len = Object.keys(recommendedProductsList[0]).length;
+        let arr: Product[] = [];
+        while (arr.length < 2 && arr.length < len-1) {
+            const num = Math.floor(Math.random() * len);
+            if (recommendedProductsList[num] && recommendedProductsList[num].id !== product.id) {
+                if (arr.length === 0 || arr[0].id !== recommendedProductsList[num].id) {
+                    arr.push(recommendedProductsList[num]);
+                }
+            }
+        }
+        setrecommendedProducts(arr);
     }, []);
     useEffect(() => {
         const GetUserFavorites = async () => {
