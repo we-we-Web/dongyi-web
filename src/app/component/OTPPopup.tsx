@@ -1,6 +1,6 @@
 ﻿import OTPVerify from "./OTPVerify";
 
-function OTPverify({ onClose, setUser }: { onClose: () => void, setUser: (user: any) => void }) {
+function OtpPopup({ onClose }: { onClose: () => void }) {
     const handleClickOutside = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         if (event.target === event.currentTarget) {
             onClose();
@@ -12,7 +12,7 @@ function OTPverify({ onClose, setUser }: { onClose: () => void, setUser: (user: 
             <div className="bg-white p-8 rounded-lg w-80 shadow-lg">
                 <h2 className="text-2xl font-bold mb-4">OTP 驗證</h2>
                 <div className="my-4 text-center">
-                    <OTPVerify onClose={onClose} setUser={setUser}/>
+                    <OTPVerify onClose={onClose} />
                 </div>
                 <button 
                     onClick={onClose} 
@@ -24,4 +24,4 @@ function OTPverify({ onClose, setUser }: { onClose: () => void, setUser: (user: 
     );
 };
 
-export default OTPverify;
+export default OtpPopup;

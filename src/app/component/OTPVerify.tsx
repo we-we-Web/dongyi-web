@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 
-export default function OTPVerify({ onClose, setUser }: { onClose: () => void, setUser: (user: any) => void }) {
+export default function OTPVerify({ onClose }: { onClose: () => void }) {
     const [otp, setOtp] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
@@ -22,7 +22,6 @@ export default function OTPVerify({ onClose, setUser }: { onClose: () => void, s
             });
             if (response.status === 200) {
                 const result = await response.json();
-                setUser(result);
                 setMessage('Account created successfully');
                 onClose();
             } else {
