@@ -7,7 +7,7 @@ export default function LoginRegister({ onClose }: { onClose: () => void }) {
     const [authUrl, setAuthUrl] = useState<string | null>(null);
 
     useEffect(() => {
-        axios.get('https://dongyi-api.hnd1.zeabur.app/auth/login', {
+        axios.get('https://dongyi-api.hnd1.zeabur.app/user/auth/login', {
             withCredentials: true
         })
             .then((res) => setAuthUrl(res.data.auth_url))

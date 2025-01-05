@@ -155,7 +155,6 @@ function UserPage() {
                     </ul>
                 </aside>
 
-                {/* Main Content */}
                 <div className="flex-1 bg-white shadow-md rounded-lg p-6">
                     {activeTab === 'profile' && (
                         <>

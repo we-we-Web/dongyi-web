@@ -80,27 +80,27 @@ export default function ProductContent({ product, recommendedProductsList }: { p
         }
         setrecommendedProducts(arr);
     }, []);
-    useEffect(() => {
-        const GetUserFavorites = async () => {
-            if (email && product?.id) { 
-                const url = `https://dongyi-api.hnd1.zeabur.app/account/get-favorites?id=${email}`;
-                try {
-                    const response = await fetch(url);
-                    if (response.ok) {
-                        const { favorites } = await response.json(); 
-                        setIsFavorite(favorites.includes(product.id));
-                    } else {
-                        console.error('Failed to fetch:', response.status);
-                    }
-                } catch (error) {
-                    console.error('Error fetching favorite status:', error);
-                }
-            }
-        };
+
+    // useEffect(() => {
+    //     const GetUserFavorites = async () => {
+    //         if (email && product?.id) { 
+    //             const url = `https://dongyi-api.hnd1.zeabur.app/account/get-favorites?id=${email}`;
+    //             try {
+    //                 const response = await fetch(url);
+    //                 if (response.ok) {
+    //                     const { favorites } = await response.json(); 
+    //                     setIsFavorite(favorites.includes(product.id));
+    //                 } else {
+    //                     console.error('Failed to fetch:', response.status);
+    //                 }
+    //             } catch (error) {
+    //                 console.error('Error fetching favorite status:', error);
+    //             }
+    //         }
+    //     };
     
-        GetUserFavorites();
-    }, [email, product?.id]);
-    
+    //     GetUserFavorites();
+    // }, [email, product?.id]);
 
     const handleSizeSelect = (size: string) => {
         setSelectedSize(size);
@@ -177,7 +177,7 @@ export default function ProductContent({ product, recommendedProductsList }: { p
     
         const url = 'https://dongyi-api.hnd1.zeabur.app/user/account/liked-update';
         const requestPayload = {
-            id: email,
+            id: `${email}`,
             liked: `${product.id}`,
         };
     
@@ -191,7 +191,6 @@ export default function ProductContent({ product, recommendedProductsList }: { p
             });
     
             if (response.ok) {
-                const result = await response.json();
                 if (isFavorite) {
                     setIsFavorite(false);
                     setToast({ message: "Removed from favorites successfully.", type: "success" });
