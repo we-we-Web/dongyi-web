@@ -63,7 +63,6 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
     const [isLoading, setIsLoading] = useState(true);
     const [categories, setCategories] = useState<string[]>([]);
     const [groupedProducts, setGroupedProducts] = useState<Record<string, Product[]>>({});
-    const [isAdmin, setIsAdmin] = useState(false);
     useEffect(() => {
         const uniqueCategories = Array.from(
             new Set(products.map((product) => product.categories)
@@ -95,8 +94,6 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
                     try{
                         const response = fetch(url);
                         const data = await (await response).json();
-                        localStorage.setItem('isAdmin', `${data}`);
-                        setIsAdmin(data);
                     }
                     catch(err) {
                         console.log(err);
