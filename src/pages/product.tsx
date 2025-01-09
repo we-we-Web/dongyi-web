@@ -6,6 +6,7 @@ import { GetServerSideProps } from 'next';
 import { UserProfile } from '../app/model/userProfile';
 import { jwtDecode } from 'jwt-decode';
 import ProductImageGallery from '../app/component/ProductImageGallery';
+import FavoriteButton from '../app/component/FavoriteButton';
 
 import ProductCard from '../app/component/ProductCard';
 import NavigationBar from '../app/component/NavigationBar';
@@ -21,19 +22,18 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
         let response = await fetch(url);
         if (response.ok) {
             const product: Product = await response.json();
-            const recommendedProducts: Product[] = [];
+            const recommendedProductsList: Product[] = [];
             console.log(`Get product ${ProductId.id} successfully`);
-            for(let i = 1; i <= 2; i++) { 
-                url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${i}`;
-                response = await fetch(url);
-                if (response.ok) {
-                    recommendedProducts.push(await response.json());
-                    console.log(`Get recommendedProducts ${i} successfully`);
-                } else {
-                    console.error('failed to fetch:', response.status);
-                }
+            url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/categories/${product.categories}`;
+            response = await fetch(url);
+            if (response.ok) {
+                const products: Product[] = await response.json();
+                recommendedProductsList.push(...products);
+                console.log(`Get recommendedProductsList successfully`);
+            } else {
+                console.error('failed to fetch:', response.status);
             }
-            return { props: { product, recommendedProducts} };
+            return { props: { product, recommendedProductsList} };
         } else {
             console.error('failed to fetch:', response.status);
             return { props: {} };
@@ -44,13 +44,15 @@ export const getServerSideProps: GetServerSideProps = async(context) => {
     }
 }
 
-export default function ProductContent({ product, recommendedProducts }: { product: Product, recommendedProducts: Product[] }) {
+export default function ProductContent({ product, recommendedProductsList }: { product: Product, recommendedProductsList: Product[] }) {
     const [email, setEmail] = useState('');
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
     const [quantity, setQuantity] = useState<number>(1);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isFavorite, setIsFavorite] = useState<boolean>(false);
+    const [recommendedProducts,setrecommendedProducts] = useState<Product[]>([]);
 
     useEffect(() => {
         const token = localStorage.getItem('access-token');
@@ -66,7 +68,39 @@ export default function ProductContent({ product, recommendedProducts }: { produ
         if(localStorage.getItem("isAdmin") === "true") {
             setIsAdmin(true);
         }
+        const len = Object.keys(recommendedProductsList[0]).length;
+        let arr: Product[] = [];
+        while (arr.length < 2 && arr.length < len-1) {
+            const num = Math.floor(Math.random() * len);
+            if (recommendedProductsList[num] && recommendedProductsList[num].id !== product.id) {
+                if (arr.length === 0 || arr[0].id !== recommendedProductsList[num].id) {
+                    arr.push(recommendedProductsList[num]);
+                }
+            }
+        }
+        setrecommendedProducts(arr);
     }, []);
+
+    // useEffect(() => {
+    //     const GetUserFavorites = async () => {
+    //         if (email && product?.id) { 
+    //             const url = `https://dongyi-api.hnd1.zeabur.app/account/get-favorites?id=${email}`;
+    //             try {
+    //                 const response = await fetch(url);
+    //                 if (response.ok) {
+    //                     const { favorites } = await response.json(); 
+    //                     setIsFavorite(favorites.includes(product.id));
+    //                 } else {
+    //                     console.error('Failed to fetch:', response.status);
+    //                 }
+    //             } catch (error) {
+    //                 console.error('Error fetching favorite status:', error);
+    //             }
+    //         }
+    //     };
+    
+    //     GetUserFavorites();
+    // }, [email, product?.id]);
 
     const handleSizeSelect = (size: string) => {
         setSelectedSize(size);
@@ -134,16 +168,66 @@ export default function ProductContent({ product, recommendedProducts }: { produ
 
         setTimeout(() => setToast(null), 3000);
     };
+    
+    const handleToggleFavorite = async () => {
+        if (!email) {
+            setIsLoginOpen(true);
+            return;
+        }
+    
+        const url = 'https://dongyi-api.hnd1.zeabur.app/user/account/liked-update';
+        const requestPayload = {
+            id: `${email}`,
+            liked: `${product.id}`,
+        };
+    
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestPayload),
+            });
+    
+            if (response.ok) {
+                if (isFavorite) {
+                    setIsFavorite(false);
+                    setToast({ message: "Removed from favorites successfully.", type: "success" });
+                } else {
+                    setIsFavorite(true);
+                    setToast({ message: "Added to favorites successfully!", type: "success" });
+                }
+            } else {
+                const errorText = await response.text();
+                setToast({
+                    message: `Error occurred while updating favorites: ${response.status} - ${errorText}`,
+                    type: "error",
+                });
+            }
+        } catch (error) {
+            console.error('Error updating favorites:', error);
+            setToast({ message: "Failed to update favorites. Please try again later.", type: "error" });
+        }
+    
+        setTimeout(() => setToast(null), 3000);
+    };
 
     return (
         <div className="flex flex-col items-center bg-gray-50 min-h-screen py-10">
             <NavigationBar />
             <div className="bg-white shadow-lg rounded-lg p-8 max-w-4xl w-full mt-20">
                 <div className="flex flex-col md:flex-row md:space-x-8">
-                    <div className="flex-1 rounded-lg border border-slate-300">
-                        <ProductImageGallery id={product.id} name={product.name} isIndex={false} index={0}/>
+                <div className="flex-1 rounded-lg border border-slate-300 relative">
+                    <div className="absolute top-2 right-2 z-10">
+                        <FavoriteButton
+                            productId={product.id}
+                            isFavorite={isFavorite}
+                            onToggleFavorite={handleToggleFavorite}
+                        />
                     </div>
-
+                    <ProductImageGallery id={product.id} name={product.name} isIndex={false} index={0} />
+                </div>
                     <div className="flex-1 flex flex-col space-y-4">
                         <h1 className="text-2xl font-bold text-gray-800">
                             {product.name}
