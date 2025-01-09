@@ -1,5 +1,4 @@
 ﻿import React, { useEffect, useState } from 'react';
-import LogoutButton from '../app/component/LogoutButton';
 import { jwtDecode } from 'jwt-decode';
 import { UserProfile } from '../app/model/userProfile';
 import { useRouter } from 'next/router';

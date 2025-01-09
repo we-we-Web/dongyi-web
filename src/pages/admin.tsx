@@ -41,7 +41,7 @@ function Admin() {
             const email = decoded.email;
             try {
                 fetchUser(decoded.email, decoded.name);
-                let url = 'https://dongyi-api.hnd1.zeabur.app/order/api/orders-get';
+                const url = 'https://dongyi-api.hnd1.zeabur.app/order/api/orders-get';
                 const request = {
                     "id": `${email}`,
                 }
