@@ -24,6 +24,7 @@
     "google-auth-library": "^9.15.0",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
+    "moment": "^2.30.1",
     "next": "^15.1.2",
     "playfab-sdk": "^2.166.241122",
     "react": "^19.0.0",

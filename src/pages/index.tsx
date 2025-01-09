@@ -140,7 +140,6 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
             </div>
             <div className="container mx-auto px-4 py-8 mt-16">
                 <h1 className="text-4xl font-bold text-center mb-12">商品列表</h1>
-                {isAdmin ? (<Link href={{pathname: '/admin', query: { id: -1 }}}>新增商品</Link>):('')}
                 {categories.map((category) => (
                     <div key={category} className="mb-12">
                         <h2 className="text-2xl font-semibold mb-6 border-b-2 border-gray-300 pb-2">
