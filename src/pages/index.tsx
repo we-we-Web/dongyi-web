@@ -11,11 +11,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { sliderSettings } from '../app/model/sliderSettings';
 import { AdsItem } from '../app/model/adsItem';
+import Chatbot from '../app/component/chatbot';
+import Footer from '../app/component/Footer';
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import '../globals.css';
-
 
 export const getServerSideProps: GetServerSideProps = async () => {
     const fetchProducts = async() => {
@@ -139,7 +140,6 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
             </div>
             <div className="container mx-auto px-4 py-8 mt-16">
                 <h1 className="text-4xl font-bold text-center mb-12">商品列表</h1>
-                {isAdmin ? (<Link href={{pathname: '/admin', query: { id: -1 }}}>新增商品</Link>):('')}
                 {categories.map((category) => (
                     <div key={category} className="mb-12">
                         <h2 className="text-2xl font-semibold mb-6 border-b-2 border-gray-300 pb-2">
@@ -166,6 +166,8 @@ function Home({ products, ads }: { products: Product[], ads: AdsItem[] }) {
                     </div>
                 )}
             </div>
+                <Chatbot />
+                <Footer />
         </>
     );
 }

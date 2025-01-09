@@ -1,366 +1,274 @@
-'use server'
-
-import React, { useState,useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import LogoutButton from '../app/component/LogoutButton';
+import { jwtDecode } from 'jwt-decode';
+import { UserProfile } from '../app/model/userProfile';
+import { useRouter } from 'next/router';
+import Loading from '../app/component/Loading';
+import Link from 'next/link';
 import NavigationBar from '../app/component/NavigationBar';
-import ProductImage from '../app/component/ProductImage';
-import {Product,ProductSpec} from '../app/model/product';
-import { GetServerSideProps } from 'next';
 import '../globals.css';
+import { User } from '../app/model/userModel';
+import moment from 'moment';
 
-export const getServerSideProps: GetServerSideProps = async(context) => {
-    const ProductId = context.query!;
-    if (ProductId.id === '-1') {
-        const product: Product = { id: '-1', name: '新商品', price: 0, description: '無', size: {}, discount: 0, categories: 'categories' };
-        const url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/`;
-        const method = 'POST';
-        return { props: {product,url,method} };
-    }
-    try {
-        let url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${ProductId.id}`;
-        const response = await fetch(url);
-        if (response.ok) {
-            const product: Product = await response.json();
-            console.log(`Get product ${ProductId.id} successfully`);
-            url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${product.id}`;
-            const method = 'PATCH';
-            return { props: { product,url,method } };
-        } else {
-            console.error('failed to fetch:', response.status);
-            return { props: {} };
-        }
-    } catch(err) {
-        console.error('error:', err);
-        return { props: {} };
-    }
+interface sampleOrder {
+    id:string;
+    status:string;
+    owner:string;
+    created_at:string;
 }
 
-export default function Admin({ product,url,method }: { product: Product,url:string,method:string }) {
-    const [onEdit, setOnEdit] = useState(false);
-    const [newProduct, setNewProduct] = useState<Product>(product);
-    const [selectedFile, setSelectedFile] = useState<File>();
-    const [size, setSize] = useState<{ [key: string]: number }>(product.size);
-    const [remain_amount, setRemain_amount] = useState<number>(0);
-    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-    const [selectedSize, setSelectedSize] = useState<string | null>(null);
-    const [enableSendImg, setEnableSendImg] = useState<boolean>(false);
+function Admin() {
+    const router = useRouter();
+    const [user, setUser] = useState<User | null>(null);
+    const [orders, setOrders] = useState([]);
+    const [created, setCreated] = useState<sampleOrder[]>([]);
+    const [pending, setPending] = useState<sampleOrder[]>([]);
+    const [delivery, setDelivery] = useState<sampleOrder[]>([]);
+    const [completed, setCompleted] = useState<sampleOrder[]>([]);
+    const [rejected, setRejected] = useState<sampleOrder[]>([]);
+    const [draggedOrder, setDraggedOrder] = useState<sampleOrder>();
+    const [loading, setLoading] = useState(true);
+    
+    const statusOrder = [created, pending, delivery, completed, rejected];
+    const statusName = ['新訂單', '處理中', '運送中', '已完成', '已取消'];
+    const statusValue = ['created', 'pending', 'delivery', 'completed', 'rejected'];
+    const bgcolors = ['bg-purple-100', 'bg-purple-200', 'bg-purple-300', 'bg-purple-400', 'bg-red-400'];
 
-    const handleSizeSelect = (size: string) => {
-        setSelectedSize(size);
-    };
-
-    const sizeOrder = ['S', 'M', 'L', 'XL'];
-    const edit = () => {
-        if (newProduct) {
-            product = newProduct;
-        }
-        // console.log(product);
-        setOnEdit(!onEdit);
-    }
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files && event.target.files.length > 0) {
-            setSelectedFile(event.target.files[0]);
-        }
-    };
-
-    const save = (type:string , value : string|number|ProductSpec) => {
-        if(!newProduct){
-            setNewProduct({ id: '', name: '', price: 0, description: '',size:{}, discount: 0, categories: '' });
-        }
-        if (type === 'price' || type === 'remain_amount') {
-            value = parseInt(value as string);
-        }
-        setNewProduct({ ...newProduct, [type]: value } as Product);
-        // console.log(newProduct);
-    }
-
-    const sortDictionaryByKeys = (dict: { [key: string]: number }, order: string[]) => {
-        const sortedEntries = Object.entries(dict).sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
-        return Object.fromEntries(sortedEntries);
-    };
-
-    const handleSaveSize = () => {
-        console.log('selectedSize:', selectedSize);
-        console.log('remain_amount:', remain_amount);
-        if (remain_amount === 0) {
-            const tmpSize = { ...size };
-            if (selectedSize) {
-                delete tmpSize[selectedSize];
-            }
-            setSize(tmpSize);
-        } else {
-            if(remain_amount > 0 && selectedSize && newProduct.size.hasOwnProperty(selectedSize)){
-                const tmpSize = { ...size };
-                tmpSize[selectedSize] = remain_amount;
-                console.log('tmpSize:', tmpSize);
-                setSize(tmpSize);
-                // setSize({ ...size, [newSize]: remain_amount });
-            } else {
-                if (selectedSize) {
-                    const tmpSize = { ...size };
-                    tmpSize[selectedSize] = remain_amount;
-                    setSize(tmpSize);
+    useEffect(() => {
+        const token = localStorage.getItem('access-token');
+        if (token) {
+            const decoded: UserProfile = jwtDecode(token);
+            const email = decoded.email;
+            try {
+                fetchUser(decoded.email, decoded.name);
+                let url = 'https://dongyi-api.hnd1.zeabur.app/order/api/orders-get';
+                const request = {
+                    "id": `${email}`,
                 }
+                const fetchOrders = async () => {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(request),
+                    });
+                    if(response.ok) {
+                        const result = await response.json();
+                        setOrders(result);
+                    } else {
+                        console.error('fetch order error:', response.status);
+                    }
+                };
+                fetchOrders();
+            } catch (error) {
+                console.error("無效的 JWT:", error);
             }
+        } else {
+            router.push('/');
         }
-        setToast({ message: 'Size updated', type: 'success' });
-        setTimeout(() => setToast(null), 3000);
-    }
 
-    useEffect(() => {
-        sortDictionaryByKeys(size, sizeOrder);
-        save('size', size);
-    }, [size]);
-
-    useEffect(() => {
-        if(method === 'POST'){
-            setEnableSendImg(false);
-        }
-        else {
-            setEnableSendImg(true);
-        }
     }, []);
 
-    const send = async() => {
+    useEffect(() => {
+        const token = localStorage.getItem('access-token');
+        if(!token) return;
+        const decoded: UserProfile = jwtDecode(token);
+        const email = decoded.email;
+        orders.map((order) => {
+            const url = 'https://dongyi-api.hnd1.zeabur.app/order/api/order-get';
+            const request = {
+                "id": `${order}`,
+                "owner": `${email}`,
+            }
+            const fetchOrder = async () => {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(request),
+                });
+                if(response.ok) {
+                    const result = await response.json();
+                    // console.log(result.createdAt);
+                    const order = {
+                        id: result.id,
+                        status: result.status,
+                        owner: result.owner,
+                        created_at: result.createdAt,
+                    }
+                    if(result.status == "created") {
+                        setCreated(created => [...created, order]);
+                    } else if(result.status == "pending") {
+                        setPending(pending => [...pending, order]);
+                    } else if(result.status == "delivery") {
+                        setDelivery(delivery => [...delivery, order]);
+                    } else if(result.status == "completed") {
+                        setCompleted(completed => [...completed, order]);
+                    } else if(result.status == "rejected") {
+                        setRejected(rejected => [...rejected, order]);
+                    }
+                } else {
+                    console.error('fetch order error:', response.status);
+                }
+            };
+            fetchOrder();
+        });
+        setLoading(false);
+    }, [orders]);
+
+    const fetchUser = async(email: string, name: string) => {
+        const url = 'https://dongyi-api.hnd1.zeabur.app/user/account/account-get';
         const request = {
-            id: Number(newProduct.id),
-            name: String(newProduct.name),
-            price: Number(newProduct.price),
-            size: newProduct.size,
-            description: String(newProduct.description),
-            categories: String(newProduct.categories),
-            discount: Number(newProduct.discount),
-            image_url: '',
+            "id": `${email}`,
         }
-        console.log("request : ",request);
-        console.log("url : ",url);
         try {
             const response = await fetch(url, {
-                method: method,
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(request),
             });
-            if(response.ok){
-                const result = await response.json();
-                console.log(result);
-                setEnableSendImg(true);
-                setToast({ message: 'updata successfully: '+ result, type: 'success' });
-                setTimeout(() => setToast(null), 3000);
-                return;
-            }
-            else{
-                console.log('failed to add product:', response.status);
-            }
-        } catch (err) {
-            console.error('error:', err);
-        }
-    }
-    const handleSendImg = async () => {
-        if (selectedFile) {
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            await sendImg(formData, newProduct.id);
-        }
-    }
-    const sendImg = async (newImg: FormData, id: string) => {
-        const url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/upload_image?product_id=${id}`;
-        console.log('url:', url);
-        try {
-            const response = await fetch(url, {
-                method: 'PATCH',
-                body: newImg,
-            });
             if (response.ok) {
                 const result = await response.json();
-                alert(result.message);
-                console.log(result);
-                return;
+                setUser(result);
             } else {
-                console.log('Failed to upload image:', response.status);
+                console.error('fetch user error:', response.status);
             }
         } catch (err) {
-            console.error('Error:', err);
+            console.log(err);
+            router.push('/');
         }
     };
 
-    const Delete = async() => {
-        const confirmed = confirm('Are you sure to delete this product?');
-        if (confirmed) {
-            url = `https://dongyi-api.hnd1.zeabur.app/product/api/product/${product.id}`;
+    
+    const formatDate = (dateString: string) => {
+        const cleanedDateString = dateString.replace(/\[.*\]/, '');
+        const date = moment(cleanedDateString, moment.ISO_8601);
+        return date.isValid() ? date.format('YYYY-MM-DD HH:mm:ss') : 'Invalid date';
+    };
+    const handleDragStart = (order:sampleOrder) => {
+        setDraggedOrder(order);
+    };
+
+    const handleDrop = (status:string) => {
+        if (draggedOrder) {
+            const updatedOrder = { ...draggedOrder, status };
+            if (draggedOrder.status !== 'created' && status === 'created') {
+                setCreated([...created, updatedOrder]);
+                handleDropArray(draggedOrder.status,status);
+            } else if (draggedOrder.status !== 'pending' && status === 'pending') {
+                setPending([...pending, updatedOrder]);
+                handleDropArray(draggedOrder.status,status);
+            } else if (draggedOrder.status !== 'delivery' && status === 'delivery') {
+                setDelivery([...delivery, updatedOrder]);
+                handleDropArray(draggedOrder.status,status);
+            } else if (draggedOrder.status !== 'completed' && status === 'completed') {
+                setCompleted([...completed, updatedOrder]);
+                handleDropArray(draggedOrder.status,status);
+            }else if (draggedOrder.status !== 'rejected' && status === 'rejected') {
+                setRejected([...rejected, updatedOrder]);
+                handleDropArray(draggedOrder.status,status);
+            }
+            setDraggedOrder(undefined);
+        }
+    };
+
+    const handleDropArray = (status:string,newStatus:string) => {
+        if(draggedOrder){
+            if(status === 'created') {
+                setCreated(created.filter(order => order.id !== draggedOrder.id));
+            }else if(status === 'pending') {
+                setPending(pending.filter(order => order.id !== draggedOrder.id));
+            }else if(status === 'delivery') {
+                setDelivery(delivery.filter(order => order.id !== draggedOrder.id));
+            }else if(status === 'completed') {
+                setCompleted(completed.filter(order => order.id !== draggedOrder.id));
+            } else if(status === 'rejected') {
+                setRejected(rejected.filter(order => order.id !== draggedOrder.id));
+            }
+        }
+        const fetchStatusUpdate = async () => {
+            const url = 'https://dongyi-api.hnd1.zeabur.app/order/api/status-upd';
+            const request = {
+                id: draggedOrder?.id,
+                admin: user?.id || '',
+                status: newStatus,
+            };
+            console.log('fetch status update request:', request);
             try{
                 const response = await fetch(url, {
-                    method: 'DELETE',
+                    method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-
+                    body: JSON.stringify(request),
                 });
-                if(response.ok){
+                if (response.ok) {
                     const result = await response.json();
-                    console.log(result);
-                    console.log('Product deleted successfully');
-                    return;
+                    console.log('fetch status update successfully:', result);
                 }
                 else{
-                    console.log('failed to add product:', response.status);
+                    console.error('fetch status update error:', response.status);
                 }
+            } catch (error) {
+                console.error('fetch status update error:', error);
             }
-            catch(err){
-                console.error('error:', err);
-            }
-        } else {
-            console.log('Product deletion cancelled');
-        }
+        };
+        fetchStatusUpdate();
     }
 
-    
+    if (loading) {
+        return <Loading/>
+    }
 
     return (
-        <div className="flex flex-col items-center bg-gray-50 min-h-screen py-10">
+        <>
             <NavigationBar />
-            <div className="bg-white shadow-lg rounded-lg p-8 max-w-4xl w-full mt-20">
-                <div className="flex flex-col md:flex-row md:space-x-8">
-                    <div className="flex-1 rounded-lg border border-slate-300">
-                        {onEdit ? 
-                            ( <div>
-                                <label>新圖片</label>
-                                <input type='file' onChange={handleFileChange}/>
-                             </div>):
-                            (<ProductImage id={newProduct.id} name={newProduct.name} isIndex={false} index={0}/>)
-                        }
-                    </div>
-                    <div className="flex-1 flex flex-col space-y-4">
-                        <p className="text-gray-600">
-                            {onEdit ?
-                                (<input type='text'
-                                    placeholder={newProduct.id} 
-                                    className='border border-gray-400 w-full' 
-                                    onChange={(e) => save('id', e.target.value)}
-                                    style={{ whiteSpace: 'pre-wrap' }}
-                                ></input>) : 
-                                (newProduct.id)
-                        }</p>
-                        <h1 className="text-2xl font-bold text-gray-800">
-                            {onEdit ?
-                                (<textarea 
-                                    placeholder = {newProduct.name} 
-                                    className='border border-gray-400 h-16 w-full' 
-                                    onChange={(e) => save('name', e.target.value)}
-                                    style={{ whiteSpace: 'pre-wrap' }}
-                                ></textarea>) : 
-                                (newProduct.name)
-                            }
-                        </h1>
-
-                        {onEdit ?
-                            (<input type='text' 
-                                placeholder={String(newProduct.price)} 
-                                className='border border-gray-400' 
-                                onChange={(e) => save('price', e.target.value)}></input>) : 
-                            (<p className="text-lg font-semibold text-purple-600">${newProduct.price}</p>)
-                        }
-                        
-                        <p className="text-gray-600">
-                            {onEdit ?
-                                (<textarea 
-                                    placeholder={newProduct.description} 
-                                    className='border border-gray-400 h-16 w-full' 
-                                    onChange={(e) => save('description', e.target.value)}
-                                    style={{ whiteSpace: 'pre-wrap' }}
-                                ></textarea>) : 
-                                (newProduct.description)
-                            }</p>
-                        
-                        <p className="text-gray-600">
-                            {onEdit ?
-                                (<input type='text'
-                                    placeholder={newProduct.categories} 
-                                    className='border border-gray-400 w-full' 
-                                    onChange={(e) => save('categories', e.target.value)}
-                                    style={{ whiteSpace: 'pre-wrap' }}
-                                ></input>) : 
-                                (newProduct.categories)
-                        }</p>
-
-
-                        <div>
-                            <h2 className="text-gray-700 font-semibold mb-2">Size:</h2>
-                            <div className="flex space-x-2">
-                                {(sizeOrder).map((size) => (
-                                    <button
-                                        key={size}
-                                        onClick={() => handleSizeSelect(size)}
-                                        className={`px-4 py-2 rounded-lg border ${
-                                            selectedSize === size
-                                                ? "bg-purple-600 text-white"
-                                                : "bg-gray-200 text-gray-800"
-                                        } hover:bg-purple-500 hover:text-white`}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
+            <div className="text-right mt-6">
+                <LogoutButton />
+            </div>
+            <div className="mt-10 flex justify-end px-10">
+                <div className="flex space-x-2">
+                    <button className="bg-purple-400 text-white py-2 px-4 rounded">訂單管理</button>
+                    <button className="bg-purple-400 text-white py-2 px-4 rounded">
+                        <Link href={{pathname: '/update', query: { id: -1 }}}>新增商品</Link>
+                    </button>
+                </div>
+            </div>
+            <div className="mt-4 px-6 mx-auto flex">
+                <div className="w-screen h-screen">
+                    <h1 className="text-4xl font-bold flex-grow text-center">訂單管理</h1>
+                    <div className='flex space-x-4 mt-6 h-2/3 w-full'>
+                        {statusOrder.map((order,index) => (
+                            <div className={`w-1/5 shadow-md rounded-lg p-3 space-y-4 ${bgcolors[index]}`} key={index}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={() => handleDrop(statusValue[index])}>
+                                <h1 className='text-3xl font-bold text-center'>{statusName[index]}</h1>
+                                <div className='overflow-y-auto space-y-4 h-5/6'>
+                                    {order.map((order,index) => (
+                                        <div className="bg-white shadow-md rounded-lg p-3 h-52" key={index}
+                                            draggable
+                                            onDragStart={() => handleDragStart(order)}>
+                                            <h1 className='text-lg font-bold'>訂單編號: {order.id}</h1>
+                                            <h1 className='text-lg font-bold'>買家: </h1>
+                                            <h1 className='text-lg font-bold'>{order.owner}</h1>
+                                            <h1 className='text-lg font-bold'>訂單日期: {formatDate(order.created_at)}</h1>
+                                            <Link href={`/order?id=${order.id}`}>
+                                                <button className='bg-purple-400 text-white py-2 px-4 rounded'>查看訂單</button>
+                                            </Link>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                            {selectedSize && (
-                                <p className="text-sm text-green-600 mt-2">
-                                    Selected size: {selectedSize} (Stock: {newProduct.size[selectedSize] ? newProduct.size[selectedSize] : 0})
-                                </p>
-                            )}
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            {onEdit ? selectedSize &&
-                                (<div>
-                                    <input type='text' 
-                                        placeholder= {String(newProduct.size[selectedSize])}
-                                        className='border border-gray-400 mr-2' 
-                                        onChange={(e) => setRemain_amount(Number(e.target.value))}></input>
-                                    <button onClick={() => handleSaveSize()}
-                                            className='bg-green-600 w-36 h-[2em] text-white hover:opacity-60 ml-4'>comform</button>
-                                </div>) : 
-                                ('')
-                            }
-                            
-                        </div>
-
-
+                        ))}
                     </div>
                 </div>
             </div>
-            <span className='mt-4'>
-                    <button 
-                        className="bg-purple-600 w-36 h-[2em] text-white hover:opacity-60" 
-                        onClick={edit}>
-                        Edit
-                    </button>
-                    <button 
-                        className="bg-green-600 w-36 h-[2em] text-white hover:opacity-60 ml-4" 
-                        onClick={() => send()}>
-                        Save
-                    </button>
-                    {enableSendImg && selectedFile ? (
-                        <button 
-                            className="bg-green-600 w-36 h-[2em] text-white hover:opacity-60 ml-4" 
-                            onClick={() => handleSendImg()}>
-                            SaveImg
-                        </button>
-                        ) : ''}
-                    <button 
-                        className="bg-gray-500 w-36 h-[2em] text-white hover:opacity-60 ml-4"
-                        onClick={Delete}>
-                        Delete
-                    </button>
-                </span>
-
-            {toast && (
-                <div
-                    className={`fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white ${
-                        toast.type === "success" ? "bg-green-500" : "bg-red-500"
-                    }`}
-                >
-                    {toast.message}
-                </div>
-            )}
-        </div>
+        </>
     );
-}
+};
+
+export default Admin;
