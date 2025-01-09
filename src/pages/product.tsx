@@ -69,7 +69,7 @@ export default function ProductContent({ product, recommendedProductsList }: { p
             setIsAdmin(true);
         }
         const len = Object.keys(recommendedProductsList[0]).length;
-        let arr: Product[] = [];
+        const arr: Product[] = [];
         while (arr.length < 2 && arr.length < len-1) {
             const num = Math.floor(Math.random() * len);
             if (recommendedProductsList[num] && recommendedProductsList[num].id !== product.id) {
@@ -81,26 +81,6 @@ export default function ProductContent({ product, recommendedProductsList }: { p
         setrecommendedProducts(arr);
     }, []);
 
-    // useEffect(() => {
-    //     const GetUserFavorites = async () => {
-    //         if (email && product?.id) { 
-    //             const url = `https://dongyi-api.hnd1.zeabur.app/account/get-favorites?id=${email}`;
-    //             try {
-    //                 const response = await fetch(url);
-    //                 if (response.ok) {
-    //                     const { favorites } = await response.json(); 
-    //                     setIsFavorite(favorites.includes(product.id));
-    //                 } else {
-    //                     console.error('Failed to fetch:', response.status);
-    //                 }
-    //             } catch (error) {
-    //                 console.error('Error fetching favorite status:', error);
-    //             }
-    //         }
-    //     };
-    
-    //     GetUserFavorites();
-    // }, [email, product?.id]);
 
     const handleSizeSelect = (size: string) => {
         setSelectedSize(size);

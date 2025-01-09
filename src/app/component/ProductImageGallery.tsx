@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useState } from "react";
 import { LazyLoadImage } from 'react-lazy-load-image-component';
+import Image from 'next/image';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 
 function ProductImageGallery({id, name, isIndex }: {id: string, name: string, isIndex: boolean,index:number}) {
@@ -49,7 +50,7 @@ function ProductImageGallery({id, name, isIndex }: {id: string, name: string, is
                             }`}
                             onClick={() => handleThumbnailClick(index)}
                         >
-                            <img
+                            <Image
                                 src={image}
                                 alt={`Thumbnail ${index}`}
                                 className="w-16 h-16 object-cover rounded-md"
